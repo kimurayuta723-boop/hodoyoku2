@@ -1,0 +1,1109 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ほどよく</title>
+<meta name="theme-color" content="#F3F6F4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ほどよく">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   デザインの約束ごと
+   ・モチーフは「器」。白磁の地に、青磁の釉(うわぐすり)が一色だけ乗る
+   ・青磁は「操作できるもの/選ばれているもの」にだけ使う
+   ・栄養素の3色(藍・玉子・若菜)は、栄養素を示すときにしか使わない
+   ・数値(kcal)は明朝、それ以外はゴシック
+   ・角丸は3段階: 押すもの=丸(pill) / 面=20 / 入力欄=14
+   ========================================================= */
+:root{
+  --paper:#F3F6F4;        /* 白磁: 地 */
+  --plate:#FFFFFF;        /* 器: 面 */
+  --ink:#1E2A30;          /* 藍墨: 文字 */
+  --muted:#66737A;
+  --line:#DCE3DF;
+  --celadon:#5E9A8E;      /* 青磁 */
+  --celadon-deep:#336B60; /* 青磁(濃) */
+  --celadon-pale:#E4EEEA; /* 青磁(淡) */
+  --on-accent:#FFFFFF;
+  --p:#3D6A8A;            /* たんぱく質: 藍 */
+  --f:#C99A22;            /* 脂質: 玉子 */
+  --c:#7FA055;            /* 炭水化物: 若菜 */
+  --danger:#A6493F;
+  --shadow:0 1px 2px rgba(30,42,48,.05), 0 6px 20px rgba(30,42,48,.06);
+
+  --r-pill:999px; --r-surface:20px; --r-field:14px; --r-inner:10px; --r-sheet:28px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
+
+  --serif:"Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --sans:"Zen Kaku Gothic New", "Hiragino Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#131A1D; --plate:#1B2428; --ink:#E6ECEA; --muted:#93A0A4; --line:#2B363B;
+    --celadon:#7DB8AB; --celadon-deep:#8FC7BA; --celadon-pale:#20302C; --on-accent:#0F1E1A;
+    --p:#80AACB; --f:#E0B84E; --c:#A3C27A; --danger:#E5908A;
+    --shadow:0 6px 20px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--celadon);outline-offset:2px}
+.app{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top) + var(--s2)) var(--s4) calc(env(safe-area-inset-bottom) + 112px)}
+.num{font-family:var(--serif);font-weight:700;font-feature-settings:"lnum","tnum"}
+.unit{font-family:var(--sans);font-weight:400;font-size:12px;color:var(--muted);margin-left:2px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+
+/* ---------- header ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;height:52px}
+.brand{font-family:var(--serif);font-weight:700;font-size:20px;letter-spacing:.12em}
+.icon-btn{width:44px;height:44px;border-radius:var(--r-pill);border:0;background:transparent;display:grid;place-items:center;color:var(--ink)}
+.icon-btn:active{background:var(--celadon-pale)}
+.icon-btn svg{width:22px;height:22px}
+.icon-btn[disabled]{opacity:.25;pointer-events:none}
+.top-actions{display:flex}
+.datebar{display:flex;align-items:center;justify-content:center;gap:var(--s1);height:44px}
+.datebar .label{display:flex;align-items:center;gap:var(--s2);min-width:11em;justify-content:center;font-weight:500}
+.chip{border:0;border-radius:var(--r-pill);font-size:12px;padding:2px 10px;line-height:1.7;background:var(--celadon-pale);color:var(--celadon-deep);font-weight:500}
+button.chip{min-height:28px}
+
+/* ---------- plate (hero) ---------- */
+.plate-wrap{display:grid;place-items:center;margin:var(--s3) 0 var(--s4)}
+.plate{position:relative;width:min(76vw,280px);aspect-ratio:1}
+.plate svg{width:100%;height:100%;display:block;overflow:visible}
+.plate-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.plate-center .cap{font-size:13px;color:var(--muted)}
+.plate-center .big{font-size:56px;line-height:1.05}
+.plate-center .sub{margin-top:var(--s2);font-size:12px;color:var(--muted);font-feature-settings:"tnum"}
+.ring{transition:stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1)}
+
+/* ---------- nutrients ---------- */
+.nutri{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s4)}
+.n-name{font-size:12px;color:var(--muted)}
+.n-val{font-size:15px;font-weight:500;font-feature-settings:"tnum"}
+.n-val small{font-size:12px;font-weight:400;color:var(--muted)}
+.bar{height:4px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:var(--s1)}
+.bar i{display:block;height:100%;border-radius:2px;transition:width .6s ease}
+.sub-nutri{display:flex;gap:var(--s4);justify-content:center;font-size:12px;color:var(--muted);margin-top:var(--s3);font-feature-settings:"tnum"}
+
+/* ---------- sections ---------- */
+.section-title{font-family:var(--serif);font-weight:700;font-size:17px;letter-spacing:.04em;margin:var(--s6) 0 var(--s3);display:flex;align-items:baseline;justify-content:space-between}
+.section-title small{font-family:var(--sans);font-weight:400;font-size:12px;color:var(--muted);letter-spacing:0}
+
+/* 面(カード): 白い器。触れるものだけ影を持つ */
+.surface{background:var(--plate);border-radius:var(--r-surface)}
+.meal{display:flex;gap:var(--s3);align-items:center;width:100%;text-align:left;border:0;padding:var(--s3);margin-bottom:var(--s2);box-shadow:var(--shadow)}
+.meal:active{transform:scale(.99)}
+.dish{width:52px;height:52px;border-radius:50%;flex:none;background:var(--celadon-pale) center/cover no-repeat;display:grid;place-items:center;color:var(--celadon-deep);font-family:var(--serif);font-weight:700;font-size:17px;box-shadow:0 0 0 3px var(--plate),0 0 0 4px var(--line)}
+.meal .body{flex:1;min-width:0}
+.meal .meta{font-size:12px;color:var(--muted)}
+.meal .names{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meal .kcal{font-size:19px;white-space:nowrap}
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:var(--s5) var(--s4);border:1.5px dashed var(--line);border-radius:var(--r-surface)}
+
+/* 情報の面: 淡い青磁、影なし */
+.panel{background:var(--celadon-pale);border-radius:var(--r-surface);padding:var(--s4)}
+.advice{margin-top:var(--s6)}
+.advice h3{margin:0 0 var(--s2);font-family:var(--serif);font-size:17px;letter-spacing:.04em}
+.advice .text{white-space:pre-wrap;font-size:15px}
+.advice .meta{font-size:11px;color:var(--muted);margin-top:var(--s2)}
+.advice .actions{display:flex;flex-direction:column;align-items:stretch;margin-top:var(--s3)}
+
+/* ---------- buttons: 3種類だけ ---------- */
+.btn{border:1.5px solid transparent;border-radius:var(--r-pill);padding:0 var(--s4);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:50px;white-space:nowrap;transition:transform .1s}
+.btn:active{transform:scale(.98)}
+.btn svg{width:20px;height:20px;flex:none}
+.btn-primary{background:var(--celadon-deep);color:var(--on-accent)}
+.btn-secondary{background:var(--plate);border-color:var(--line);color:var(--ink)}
+.btn-text{background:none;border:0;min-height:44px;padding:0 var(--s2);font-weight:500;font-size:14px;color:var(--celadon-deep)}
+.btn-text.danger{color:var(--danger)}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.btn-block{width:100%}
+.row{display:flex;gap:var(--s2)}
+.row>*{flex:1;min-width:0}
+.center{display:flex;justify-content:center}
+
+/* ---------- dock ---------- */
+.dock{position:fixed;left:0;right:0;bottom:0;padding:var(--s3) var(--s4) calc(env(safe-area-inset-bottom) + var(--s3));background:linear-gradient(to top,var(--paper) 65%,color-mix(in srgb,var(--paper) 0%,transparent));z-index:5}
+.dock-inner{max-width:520px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:var(--s2)}
+
+/* ---------- sheet ---------- */
+.overlay{position:fixed;inset:0;background:rgba(19,26,29,.45);z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-height:92dvh;overflow:auto;overscroll-behavior:contain;background:var(--paper);border-radius:var(--r-sheet) var(--r-sheet) 0 0;padding:var(--s2) var(--s4) calc(env(safe-area-inset-bottom) + var(--s5));transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.sheet.open{transform:none}
+.sheet-inner{max-width:520px;margin:0 auto}
+.grabber{width:36px;height:5px;border-radius:3px;background:var(--line);margin:var(--s1) auto var(--s2)}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:var(--s2);margin:0 calc(var(--s2) * -1) var(--s3) 0}
+.sheet-head h2{font-family:var(--serif);font-size:20px;letter-spacing:.04em;margin:0;display:flex;align-items:center;gap:var(--s2)}
+.group-title{font-family:var(--serif);font-weight:700;font-size:15px;letter-spacing:.04em;margin:var(--s5) 0 var(--s3);padding-top:var(--s5);border-top:1.5px solid var(--line)}
+.group-title.first{margin-top:0;padding-top:0;border-top:0}
+
+/* ---------- form ---------- */
+.field{margin-bottom:var(--s4)}
+.field>label,.field>.lbl{display:block;font-size:13px;color:var(--muted);margin-bottom:var(--s1)}
+.input{width:100%;border:1.5px solid var(--line);background:var(--plate);border-radius:var(--r-field);padding:12px 14px;font-size:16px;min-height:50px}
+textarea.input{min-height:100px;resize:vertical;line-height:1.6}
+.input:focus{border-color:var(--celadon);outline:none}
+.input::placeholder{color:var(--muted);opacity:.7}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2)}
+.hint{font-size:12px;color:var(--muted);margin-top:var(--s1);line-height:1.6}
+.hint a{color:var(--celadon-deep)}
+
+/* 選択状態はすべてこの見た目に統一 */
+.seg{display:flex;background:var(--plate);border:1.5px solid var(--line);border-radius:var(--r-field);padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;border-radius:var(--r-inner);min-height:40px;padding:0 4px;font-size:14px;color:var(--ink)}
+.seg button[aria-pressed="true"],.mults button[aria-pressed="true"]{background:var(--celadon-deep);color:var(--on-accent);font-weight:700;border-color:var(--celadon-deep)}
+
+.photo-preview{width:100%;max-height:240px;object-fit:cover;border-radius:var(--r-surface);display:block;margin-bottom:var(--s4)}
+
+/* ---------- review ---------- */
+.item{padding:var(--s3) var(--s4);margin-bottom:var(--s2);box-shadow:var(--shadow)}
+.item .head{display:flex;justify-content:space-between;gap:var(--s2);align-items:baseline}
+.item .name{font-weight:700}
+.item .portion{font-size:12px;color:var(--muted)}
+.item .kcal{font-size:21px;white-space:nowrap}
+.item .pfc{display:flex;flex-wrap:wrap;column-gap:var(--s3);font-size:12px;color:var(--muted);margin:var(--s1) 0 var(--s3);font-feature-settings:"tnum"}
+.mults{display:flex;gap:var(--s1);align-items:center}
+.mults button{border:1.5px solid var(--line);background:transparent;border-radius:var(--r-pill);min-width:38px;height:36px;padding:0 6px;font-size:14px;color:var(--ink)}
+.mults .del{margin-left:auto;border:0;color:var(--danger);padding:0 var(--s1);min-width:0}
+.total{display:flex;justify-content:space-between;align-items:baseline;padding:var(--s3) var(--s1) 0;margin-top:var(--s1)}
+.total .num{font-size:28px}
+.total-sub{font-size:12px;color:var(--muted);padding:0 var(--s1);margin-bottom:var(--s5);font-feature-settings:"tnum"}
+.note{font-size:13px;color:var(--muted);background:var(--celadon-pale);border-radius:var(--r-field);padding:var(--s3) 14px;margin-bottom:var(--s3)}
+.badge{font-family:var(--sans);font-size:11px;font-weight:500;border-radius:var(--r-pill);padding:1px 8px;border:1px solid var(--line);color:var(--muted);letter-spacing:0}
+
+/* ---------- steps (copy & paste) ---------- */
+.steps{list-style:none;padding:0;margin:0;counter-reset:st}
+.steps li{display:flex;gap:var(--s3);counter-increment:st;padding-bottom:var(--s5);position:relative}
+.steps li:not(:last-child)::after{content:"";position:absolute;left:13px;top:32px;bottom:6px;width:1.5px;background:var(--line)}
+.steps li::before{content:counter(st);flex:none;width:28px;height:28px;border-radius:50%;background:var(--celadon-pale);color:var(--celadon-deep);font-family:var(--serif);font-weight:700;display:grid;place-items:center;font-size:14px}
+.steps li>div{flex:1;min-width:0;padding-top:2px}
+.steps b{display:block;margin-bottom:var(--s2)}
+.steps .step-title{font-weight:700;margin-bottom:var(--s2)}
+
+/* ---------- feedback ---------- */
+.loading{display:flex;flex-direction:column;align-items:center;gap:var(--s3);padding:var(--s6) 0;color:var(--muted);font-size:14px}
+.spin{width:40px;height:40px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--celadon);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{color:var(--danger);background:color-mix(in srgb,var(--danger) 9%,transparent);border-radius:var(--r-field);padding:var(--s3) 14px;font-size:14px;margin-bottom:var(--s4)}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translateX(-50%) translateY(-16px);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:var(--r-pill);font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:40;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.week svg{width:100%;height:auto;display:block}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion: reduce){.ring,.sheet,.overlay,.btn,.bar i{transition:none}.spin{animation-duration:3s}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">ほどよく</div>
+    <div class="top-actions">
+      <button class="icon-btn" id="btnWeek" aria-label="1週間の記録">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V11M10 20V6M15 20v-7M20 20V9"/></svg>
+      </button>
+      <button class="icon-btn" id="btnSettings" aria-label="設定">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="datebar">
+    <button class="icon-btn" id="prevDay" aria-label="前の日"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <div class="label"><span id="dateLabel"></span><button class="chip" id="goToday" hidden>今日へ</button><span class="chip" id="todayMark" hidden>今日</span></div>
+    <button class="icon-btn" id="nextDay" aria-label="次の日"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+
+  <div class="plate-wrap">
+    <div class="plate" id="plate"></div>
+  </div>
+
+  <div class="nutri" id="nutri"></div>
+  <div class="sub-nutri" id="subNutri"></div>
+
+  <div class="section-title">食事 <small id="mealCount"></small></div>
+  <div id="meals"></div>
+
+  <section class="advice panel" id="advice"></section>
+</div>
+
+<div class="dock">
+  <div class="dock-inner">
+    <button class="btn btn-primary" id="btnPhoto">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+      写真で記録
+    </button>
+    <button class="btn btn-secondary" id="btnText">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>
+      文字で記録
+    </button>
+  </div>
+</div>
+<input type="file" accept="image/*" id="fileInput" class="sr" aria-hidden="true" tabindex="-1">
+<input type="file" accept="application/json" id="importInput" class="sr" aria-hidden="true" tabindex="-1">
+
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"><div class="sheet-inner"><div class="grabber"></div><div id="sheetBody"></div></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+'use strict';
+/* =========================================================
+   ほどよく — 写真・文字で食事を記録してアドバイスをもらう自分用アプリ
+   データはすべてこの端末(localStorage)に保存。APIキーも端末内のみ。
+   判定方法: Gemini API(無料枠)/ Claude API(有料)/ チャットアプリとのコピペ
+   ========================================================= */
+
+const PROVIDERS = {
+  gemini: {label:'Gemini(無料枠)', short:'Gemini', models:[
+    {id:'gemini-3.8-flash',      label:'Gemini 3.8 Flash(おすすめ)'},
+    {id:'gemini-3.5-flash-lite', label:'Gemini 3.5 Flash-Lite(軽い・速い)'}
+  ]},
+  claude: {label:'Claude(有料)', short:'Claude', models:[
+    {id:'claude-sonnet-5-5', label:'Sonnet(おすすめ・バランス型)'},
+    {id:'claude-haiku-5-5',  label:'Haiku(速い・安い)'},
+    {id:'claude-opus-5-5',   label:'Opus(高精度・高め)'}
+  ]},
+  copy: {label:'コピペのみ', short:'コピペ', models:[]}
+};
+const MEAL_TYPES = ['朝食','昼食','夕食','間食'];
+const MULTS = [{v:.5,l:'½'},{v:.75,l:'¾'},{v:1,l:'1'},{v:1.25,l:'1¼'},{v:1.5,l:'1½'},{v:2,l:'2'}];
+const ACTIVITY = [
+  {v:1.2,  l:'ほぼ座りがち'},
+  {v:1.375,l:'軽い運動・よく歩く'},
+  {v:1.55, l:'週3〜5回運動'},
+  {v:1.725,l:'毎日しっかり運動'}
+];
+const DATA_KEY = 'hodoyoku.data.v1';
+const SET_KEY  = 'hodoyoku.settings.v1';
+
+/* ---------- storage ---------- */
+function load(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch{ return fallback; } }
+function save(key, val){
+  try{ localStorage.setItem(key, JSON.stringify(val)); return true; }
+  catch(e){ toast('端末の保存容量がいっぱいです。設定からバックアップして古い写真を整理してください'); return false; }
+}
+let settings = Object.assign({
+  provider:'gemini',
+  geminiKey:'', geminiModel:'gemini-3.8-flash',
+  claudeKey:'', claudeModel:'claude-sonnet-5-5',
+  sex:'female', age:'', height:'', weight:'', activity:1.375,
+  goal:'lose', pace:'gentle'
+}, load(SET_KEY, {}));
+// 旧バージョン(Claudeのみ)の設定を引き継ぐ
+if(settings.apiKey && !settings.claudeKey){ settings.claudeKey = settings.apiKey; settings.claudeModel = settings.model || settings.claudeModel; settings.provider = 'claude'; }
+delete settings.apiKey; delete settings.model;
+const hasKey = s => (s.provider === 'gemini' && s.geminiKey) || (s.provider === 'claude' && s.claudeKey);
+const useAI = () => settings.provider !== 'copy' && hasKey(settings);
+let data = load(DATA_KEY, {days:{}});
+if(!data.days) data.days = {};
+
+const saveData = () => save(DATA_KEY, data);
+const saveSettings = () => save(SET_KEY, settings);
+
+/* ---------- utils ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const r0 = n => Math.round(Number(n)||0);
+const r1 = n => Math.round((Number(n)||0)*10)/10;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const pad = n => String(n).padStart(2,'0');
+const dkey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fromKey = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); };
+const WD = ['日','月','火','水','木','金','土'];
+const labelOf = k => { const d = fromKey(k); return `${d.getMonth()+1}月${d.getDate()}日(${WD[d.getDay()]})`; };
+const nowTime = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+function guessType(t){
+  const [h,m] = (t||nowTime()).split(':').map(Number); const x = h + m/60;
+  if(x < 10.5) return '朝食'; if(x < 15) return '昼食'; if(x < 17) return '間食'; if(x < 22.5) return '夕食'; return '間食';
+}
+let toastTimer;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 2600); }
+
+let viewKey = dkey(new Date());
+const day = k => (data.days[k] ||= {meals:[]});
+
+/* ---------- targets ---------- */
+function targets(){
+  const w = +settings.weight, h = +settings.height, a = +settings.age;
+  if(!(w>0 && h>0 && a>0)) return null;
+  const male = settings.sex === 'male';
+  const bmr = 10*w + 6.25*h - 5*a + (male ? 5 : -161);
+  const tdee = bmr * (+settings.activity || 1.375);
+  let kcal = tdee;
+  if(settings.goal === 'lose'){
+    const deficit = settings.pace === 'normal' ? 500 : 250;
+    const floor = Math.max(bmr, male ? 1500 : 1200);   // 極端に低くならない下限
+    kcal = Math.max(tdee - deficit, floor);
+  }
+  kcal = Math.round(kcal/10)*10;
+  const protein = Math.round(w * (settings.goal === 'lose' ? 1.4 : 1.2));
+  const fat = Math.round(kcal*0.25/9);
+  const carbs = Math.max(0, Math.round((kcal - protein*4 - fat*9)/4));
+  return {kcal, protein, fat, carbs, fiber: male ? 21 : 18, salt: male ? 7.5 : 6.5, bmr:Math.round(bmr), tdee:Math.round(tdee)};
+}
+
+/* ---------- item math ---------- */
+const NUTS = ['kcal','protein','fat','carbs','fiber','salt'];
+const val = (it, k) => (Number(it[k])||0) * (it.mult ?? 1);
+function sumItems(items){ const s = {kcal:0,protein:0,fat:0,carbs:0,fiber:0,salt:0}; items.forEach(it => NUTS.forEach(k => s[k] += val(it,k))); return s; }
+function sumDay(k){ return sumItems((data.days[k]?.meals || []).flatMap(m => m.items)); }
+
+/* ---------- main render ---------- */
+function render(){
+  const today = dkey(new Date());
+  $('#dateLabel').textContent = labelOf(viewKey);
+  $('#goToday').hidden = viewKey === today;
+  $('#todayMark').hidden = viewKey !== today;
+  $('#nextDay').disabled = viewKey >= today;
+
+  const t = targets();
+  const s = sumDay(viewKey);
+  renderPlate(s, t);
+  renderNutri(s, t);
+  renderMeals();
+  renderAdvice();
+}
+
+function renderPlate(s, t){
+  const R = 118, C = 2*Math.PI*R;
+  const ratio = t ? s.kcal / t.kcal : 0;
+  const lap1 = Math.min(ratio, 1);
+  const lap2 = Math.min(Math.max(ratio - 1, 0), 1);   // 目標を超えた分は「二周目」として濃い青磁で重ねる
+  let center;
+  if(!t){
+    center = `<div class="cap">今日の合計</div><div class="big num">${r0(s.kcal)}</div><div class="unit">kcal</div><div class="sub">目標は設定から決められます</div>`;
+  }else if(ratio <= 1){
+    center = `<div class="cap">あと</div><div class="big num">${r0(t.kcal - s.kcal)}</div><div class="unit">kcal</div><div class="sub">${r0(s.kcal)} / ${t.kcal} kcal</div>`;
+  }else{
+    center = `<div class="cap">目標より</div><div class="big num">+${r0(s.kcal - t.kcal)}</div><div class="unit">kcal</div><div class="sub">明日で整えれば大丈夫</div>`;
+  }
+  const ring = (frac, color, w) => `<circle class="ring" cx="150" cy="150" r="${R}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round"
+        stroke-dasharray="${C}" stroke-dashoffset="${C*(1-frac)}" transform="rotate(-90 150 150)" ${frac ? '' : 'opacity="0"'}/>`;
+  $('#plate').innerHTML = `
+    <svg viewBox="0 0 300 300" aria-hidden="true">
+      <circle cx="150" cy="150" r="146" fill="var(--plate)" style="filter:drop-shadow(0 12px 24px rgba(30,42,48,.09))"/>
+      <circle cx="150" cy="150" r="${R}" fill="none" stroke="var(--line)" stroke-width="8"/>
+      ${ring(lap1, 'var(--celadon)', 8)}
+      ${ring(lap2, 'var(--celadon-deep)', 8)}
+      <circle cx="150" cy="150" r="100" fill="none" stroke="var(--line)" stroke-width="1"/>
+    </svg>
+    <div class="plate-center" role="img" aria-label="${t ? `目標${t.kcal}キロカロリーのうち${r0(s.kcal)}キロカロリー` : `合計${r0(s.kcal)}キロカロリー`}">${center}</div>`;
+}
+
+function renderNutri(s, t){
+  const rows = [
+    {k:'protein', n:'たんぱく質', c:'var(--p)'},
+    {k:'fat',     n:'脂質',       c:'var(--f)'},
+    {k:'carbs',   n:'炭水化物',   c:'var(--c)'}
+  ];
+  $('#nutri').innerHTML = rows.map(r => {
+    const goal = t?.[r.k];
+    const w = goal ? Math.min(100, s[r.k]/goal*100) : 0;
+    return `<div>
+      <div class="n-name"><i class="dot" style="background:${r.c}"></i>${r.n}</div>
+      <div class="n-val">${r0(s[r.k])}<small>${goal ? ` / ${goal}g` : 'g'}</small></div>
+      <div class="bar"><i style="width:${w}%;background:${r.c}"></i></div>
+    </div>`;
+  }).join('');
+  $('#subNutri').innerHTML = `<span>食物繊維 ${r1(s.fiber)}${t ? ' / ' + t.fiber : ''}g</span><span>塩分 ${r1(s.salt)}${t ? ' / ' + t.salt : ''}g</span>`;
+}
+
+function renderMeals(){
+  const meals = (data.days[viewKey]?.meals || []).slice().sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  $('#mealCount').textContent = meals.length ? `${meals.length}件` : '';
+  if(!meals.length){
+    $('#meals').innerHTML = `<div class="empty">まだ記録がありません。<br>下のボタンから写真か文字で記録できます。</div>`;
+    return;
+  }
+  $('#meals').innerHTML = meals.map(m => {
+    const s = sumItems(m.items);
+    const names = m.items.map(i => i.name).join('、') || m.text || '(内容なし)';
+    const thumb = m.thumb ? `style="background-image:url('${m.thumb}')"` : '';
+    return `<button class="meal surface" data-id="${m.id}">
+      <div class="dish" ${thumb}>${m.thumb ? '' : esc(m.type.slice(0,1))}</div>
+      <div class="body">
+        <div class="meta">${esc(m.type)} ${esc(m.time||'')}</div>
+        <div class="names">${esc(names)}</div>
+      </div>
+      <div class="kcal"><span class="num">${r0(s.kcal)}</span><span class="unit">kcal</span></div>
+    </button>`;
+  }).join('');
+  document.querySelectorAll('.meal').forEach(b => b.onclick = () => openMeal(b.dataset.id));
+}
+
+function renderAdvice(){
+  const d = data.days[viewKey];
+  const has = d?.meals?.length;
+  const adv = d?.advice;
+  let html = `<h3>アドバイス</h3>`;
+  if(adv){
+    html += `<div class="text">${esc(adv.text)}</div><div class="meta">${esc(adv.at)} 時点の記録をもとに</div>`;
+  }else{
+    html += `<div class="text" style="color:var(--muted);font-size:14px">${has ? '記録した内容と目標から、次の食事の整え方を提案します。' : '食事を記録すると、内容に合わせた提案をもらえます。'}</div>`;
+  }
+  html += `<div class="actions"><button class="btn btn-secondary" id="btnAdvice" ${has ? '' : 'disabled'}>${adv ? 'いまの記録で聞き直す' : 'アドバイスをもらう'}</button>
+    ${has && useAI() ? `<button class="btn btn-text" id="btnAdviceCopy">チャットアプリで聞く(コピペ)</button>` : ''}</div>`;
+  $('#advice').innerHTML = html;
+  $('#btnAdvice').onclick = getAdvice;
+  if(has && useAI()) $('#btnAdviceCopy').onclick = () => openCopyAdvice();
+}
+
+/* ---------- sheet ---------- */
+let sheetCloseHook = null;
+function openSheet(html){
+  $('#sheetBody').innerHTML = html;
+  $('#overlay').classList.add('open');
+  $('#sheet').classList.add('open');
+  $('#sheet').scrollTop = 0;
+}
+function closeSheet(){
+  $('#overlay').classList.remove('open');
+  $('#sheet').classList.remove('open');
+  if(sheetCloseHook){ const h = sheetCloseHook; sheetCloseHook = null; h(); }
+}
+$('#overlay').onclick = closeSheet;
+const closeBtn = `<button class="icon-btn" data-close aria-label="閉じる"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+document.addEventListener('click', e => { if(e.target.closest('[data-close]')) closeSheet(); });
+
+/* ---------- image ---------- */
+function loadImage(file){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); res(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('画像を読み込めませんでした')); };
+    img.src = url;
+  });
+}
+function resize(img, max, quality){
+  const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.round(img.naturalWidth*scale), h = Math.round(img.naturalHeight*scale);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  c.getContext('2d').drawImage(img, 0, 0, w, h);
+  return c.toDataURL('image/jpeg', quality);
+}
+function squareThumb(img, size){
+  const s = Math.min(img.naturalWidth, img.naturalHeight);
+  const c = document.createElement('canvas'); c.width = size; c.height = size;
+  c.getContext('2d').drawImage(img, (img.naturalWidth-s)/2, (img.naturalHeight-s)/2, s, s, 0, 0, size, size);
+  return c.toDataURL('image/jpeg', .7);
+}
+
+/* ---------- AI API ---------- */
+class AIError extends Error { constructor(msg, kind){ super(msg); this.kind = kind; } }
+const QUOTA_TIP = 'コピペ方式なら、このまま続けられます。';
+
+async function callAI({system, text, image, json = false, maxTokens = 1500}){
+  if(!useAI()) throw new AIError('APIキーが未設定です。設定から入力するか、コピペ方式を使ってください。', 'key');
+  return settings.provider === 'gemini' ? callGemini({system, text, image, json, maxTokens}) : callClaude({system, text, image, maxTokens});
+}
+
+async function callGemini({system, text, image, json, maxTokens}){
+  const parts = [];
+  if(image) parts.push({inline_data:{mime_type:'image/jpeg', data:image.split(',')[1]}});
+  parts.push({text});
+  const body = {
+    system_instruction:{parts:[{text:system}]},
+    contents:[{role:'user', parts}],
+    generationConfig:{maxOutputTokens: Math.max(4096, maxTokens*3), ...(json ? {responseMimeType:'application/json'} : {})}
+  };
+  let res;
+  try{
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(settings.geminiModel)}:generateContent`, {
+      method:'POST',
+      headers:{'content-type':'application/json', 'x-goog-api-key':settings.geminiKey},
+      body: JSON.stringify(body)
+    });
+  }catch{ throw new AIError('通信できませんでした。電波の状態を確認してください。' + QUOTA_TIP, 'network'); }
+  if(!res.ok){
+    let msg = '', status = ''; try{ const e = (await res.json()).error || {}; msg = e.message || ''; status = e.status || ''; }catch{}
+    if(res.status === 429 || status === 'RESOURCE_EXHAUSTED') throw new AIError('Geminiの無料枠の回数制限に達しました。時間をおくと回復します。' + QUOTA_TIP, 'quota');
+    if(res.status === 400 && /API key|API_KEY/i.test(msg)) throw new AIError('GeminiのAPIキーが正しくありません。設定で確認してください。', 'key');
+    if(res.status === 403) throw new AIError('このAPIキーではGeminiを使えません。Google AI Studioでキーを確認してください。', 'key');
+    if(res.status === 404) throw new AIError('選んだGeminiのモデルが使えません。設定で別のモデルを選んでください。', 'model');
+    if(res.status >= 500) throw new AIError('Gemini側が混み合っています。少し待つか、' + QUOTA_TIP, 'busy');
+    throw new AIError(`判定に失敗しました(${res.status})。${msg}`, 'other');
+  }
+  const j = await res.json();
+  const cand = j.candidates?.[0];
+  const out = (cand?.content?.parts || []).filter(p => p.text && !p.thought).map(p => p.text).join('');
+  if(!out){
+    if(j.promptFeedback?.blockReason || cand?.finishReason === 'SAFETY') throw new AIError('この内容は判定できませんでした。文字で入力し直してください。', 'other');
+    throw new AIError('返答が空でした。もう一度お試しください。', 'other');
+  }
+  return out;
+}
+
+async function callClaude({system, text, image, maxTokens}){
+  const content = [];
+  if(image) content.push({type:'image', source:{type:'base64', media_type:'image/jpeg', data:image.split(',')[1]}});
+  content.push({type:'text', text});
+  let res;
+  try{
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'content-type':'application/json',
+        'x-api-key':settings.claudeKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body: JSON.stringify({model:settings.claudeModel, max_tokens:maxTokens, system, messages:[{role:'user', content}]})
+    });
+  }catch{ throw new AIError('通信できませんでした。電波の状態を確認してください。' + QUOTA_TIP, 'network'); }
+  if(!res.ok){
+    let msg = ''; try{ msg = (await res.json()).error?.message || ''; }catch{}
+    if(res.status === 401) throw new AIError('ClaudeのAPIキーが正しくありません。設定で確認してください。', 'key');
+    if(res.status === 404) throw new AIError('選んだモデルが使えません。設定で別のモデルを選んでください。', 'model');
+    if(res.status === 400 && /workspace/i.test(msg)) throw new AIError('APIキーにワークスペースが設定されていません。Consoleでワークスペースを選んでキーを作り直してください。', 'key');
+    if(res.status === 400 && /credit|billing/i.test(msg)) throw new AIError('Claude APIのクレジット残高が不足しています。' + QUOTA_TIP, 'quota');
+    if(res.status === 429 || res.status === 529) throw new AIError('混み合っています。少し待つか、' + QUOTA_TIP, 'busy');
+    throw new AIError(`判定に失敗しました(${res.status})。${msg}`, 'other');
+  }
+  const j = await res.json();
+  return (j.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+}
+
+function parseJSON(text){
+  const a = text.indexOf('{'), b = text.lastIndexOf('}');
+  if(a < 0 || b <= a) throw new AIError('結果の中に判定データが見つかりませんでした。', 'parse');
+  try{ return JSON.parse(text.slice(a, b+1)); }
+  catch{ throw new AIError('判定データの形式が崩れていました。もう一度お試しください。', 'parse'); }
+}
+
+const ANALYZE_SYSTEM = `あなたは管理栄養士の知識を持つ食事記録アシスタントです。
+写真や文章から食事内容を推定し、日本食品標準成分表や一般的な外食・市販品の栄養表示を参考に、1品ずつ栄養価を見積もります。
+- 量は器の大きさ、箸やスマホなどの比較対象、一般的な1人前から推定する
+- 揚げ油、炒め油、ドレッシング、ソースなど見えにくいカロリーも考慮する
+- 外食チェーンや市販品と分かる場合は、その公式の栄養表示に近い値を使う
+- ユーザーの補足がある場合は最優先で反映する
+- 料理名は日本語で簡潔に
+出力は次の形式のJSONのみ。前後に説明文を付けないこと。
+{"items":[{"name":"料理名","portion":"量の目安(例: 茶碗1杯 約150g)","grams":150,"kcal":234,"protein":3.8,"fat":0.5,"carbs":55.7,"fiber":2.3,"salt":0}],"confidence":"high|medium|low","note":"推定の前提や不確かな点を1文で"}
+食べ物が写っていない・書かれていない場合は {"items":[],"confidence":"low","note":"理由"} を返す。`;
+
+function analyzeText(draft, correction){
+  let text = '';
+  if(draft.image) text += 'この写真の食事を記録してください。\n';
+  if(draft.text) text += `${draft.image ? '補足' : '食べたもの'}: ${draft.text}\n`;
+  if(correction && draft.items?.length){
+    text += `\n前回の推定: ${JSON.stringify(draft.items.map(i => ({name:i.name, portion:i.portion, mult:i.mult ?? 1})))}\n`;
+    text += `ユーザーからの修正: ${correction}\n修正を反映して全体を推定し直してください(量の倍率は1に戻して実際の量で出す)。`;
+  }else if(correction){
+    text += `補足: ${correction}\n`;
+  }
+  return text.trim();
+}
+
+function normalizeResult(out){
+  const items = (out.items || []).map(i => ({
+    name: String(i.name || '不明な料理'), portion: String(i.portion || ''), grams: r0(i.grams),
+    kcal: r0(i.kcal), protein: r1(i.protein), fat: r1(i.fat), carbs: r1(i.carbs), fiber: r1(i.fiber), salt: r1(i.salt), mult: 1
+  }));
+  return {items, confidence: out.confidence || 'medium', note: out.note || ''};
+}
+
+async function analyze(draft, correction){
+  const out = await callAI({system:ANALYZE_SYSTEM, text:analyzeText(draft, correction), image:draft.image, json:true});
+  return normalizeResult(parseJSON(out));
+}
+
+/* ---------- copy & paste mode ---------- */
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); return true; }
+  catch{
+    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+    let ok = false; try{ ok = document.execCommand('copy'); }catch{}
+    ta.remove(); return ok;
+  }
+}
+function dataURLtoFile(dataURL, name){
+  const [head, b64] = dataURL.split(','); const mime = head.match(/:(.*?);/)[1];
+  const bin = atob(b64); const arr = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new File([arr], name, {type:mime});
+}
+async function readClipboardInto(sel){
+  try{ const t = await navigator.clipboard.readText(); if(t){ $(sel).value = t; return; } }catch{}
+  $(sel).focus(); toast('入力欄を長押しして「ペースト」してください');
+}
+
+/* 判定用: コピー→チャットアプリで送信→結果を貼り付け */
+function openCopyAnalyze(draft, correction, error){
+  const isPhoto = !!draft.image;
+  const prompt = `${ANALYZE_SYSTEM}\n\n---\n${analyzeText(draft, correction)}${isPhoto ? '\n(食事の写真を添付しています)' : ''}`;
+  const canShareImg = isPhoto && navigator.canShare && navigator.canShare({files:[dataURLtoFile(draft.image, 'meal.jpg')]});
+  openSheet(`
+    <div class="sheet-head"><h2>チャットアプリで判定</h2>${closeBtn}</div>
+    ${error ? `<div class="error">${esc(error)}</div>` : ''}
+    <ol class="steps">
+      <li><div><b>${isPhoto ? '写真と依頼文を送る準備をします' : '依頼文をコピーします'}</b>
+        <div class="row">
+          ${canShareImg ? `<button class="btn btn-primary" id="cpShare">写真を共有</button>` : ''}
+          <button class="btn ${canShareImg ? 'btn-ghost' : 'btn-primary'}" id="cpCopy">依頼文をコピー</button>
+        </div>
+        ${isPhoto && !canShareImg ? `<div class="hint">写真は<a href="${draft.image}" download="meal.jpg" style="color:var(--celadon-deep)">ここから保存</a>して添付してください。</div>` : ''}
+      </div></li>
+      <li><div><b>チャットアプリに貼り付けて送信</b><div class="hint">Claude・ChatGPT・Geminiなど、ふだん使っているアプリでOKです。${isPhoto ? '「写真を共有」でアプリを選び、依頼文も一緒に貼り付けてください。' : ''}</div></div></li>
+      <li><div><b>返ってきた答えを全部コピーして、ここに貼り付け</b>
+        <textarea class="input" id="cpPaste" placeholder='{"items":[ ... ]} のような答えをそのまま貼り付け' style="min-height:110px;font-size:14px;margin-bottom:var(--s2)"></textarea>
+        <div class="row">
+          <button class="btn btn-secondary" id="cpFromClip">ペースト</button>
+          <button class="btn btn-primary" id="cpLoad">読み込む</button>
+        </div>
+      </div></li>
+    </ol>
+  `);
+  $('#cpCopy').onclick = async () => toast(await copyText(prompt) ? '依頼文をコピーしました' : 'コピーできませんでした');
+  if(canShareImg) $('#cpShare').onclick = async () => {
+    await copyText(prompt);   // 共有先で依頼文が落ちても貼り付けられるように先にコピー
+    try{ await navigator.share({files:[dataURLtoFile(draft.image, 'meal.jpg')], text:prompt}); }
+    catch(e){ if(e.name !== 'AbortError') toast('共有できませんでした。写真はカメラロールから添付してください'); }
+  };
+  $('#cpFromClip').onclick = () => readClipboardInto('#cpPaste');
+  $('#cpLoad').onclick = () => {
+    const raw = $('#cpPaste').value.trim();
+    if(!raw){ $('#cpPaste').focus(); return; }
+    try{
+      const result = normalizeResult(parseJSON(raw));
+      const prevText = draft.text;
+      Object.assign(draft, result);
+      if(correction) draft.text = prevText ? `${prevText} / ${correction}` : correction;
+      openReview(draft);
+    }catch(err){ openCopyAnalyze(draft, correction, err.message + ' チャットの答えを最初から最後まで全部コピーして貼り付けてください。'); }
+  };
+}
+
+/* ---------- entry flows ---------- */
+$('#btnPhoto').onclick = () => { $('#fileInput').value = ''; $('#fileInput').click(); };
+$('#fileInput').onchange = async e => {
+  const file = e.target.files[0]; if(!file) return;
+  try{
+    const img = await loadImage(file);
+    const draft = newDraft('photo');
+    draft.image = resize(img, 1024, .82);   // 送信用(保存はしない)
+    draft.thumb = squareThumb(img, 200);    // 一覧用の小さなサムネイル
+    openEntry(draft);
+  }catch(err){ toast(err.message); }
+};
+$('#btnText').onclick = () => openEntry(newDraft('text'));
+
+function newDraft(source){
+  const t = nowTime();
+  const today = viewKey === dkey(new Date());
+  const time = today ? t : '12:00';
+  return {id:null, date:viewKey, source, time, type: guessType(time), text:'', items:[], thumb:'', image:''};
+}
+
+function typeSeg(draft){
+  return `<div class="seg" role="group" aria-label="食事の種類">${MEAL_TYPES.map(t => `<button type="button" data-type="${t}" aria-pressed="${draft.type === t}">${t}</button>`).join('')}</div>`;
+}
+function bindTypeSeg(draft){
+  document.querySelectorAll('[data-type]').forEach(b => b.onclick = () => {
+    draft.type = b.dataset.type;
+    document.querySelectorAll('[data-type]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  });
+}
+
+function openEntry(draft, error){
+  const isPhoto = draft.source === 'photo';
+  openSheet(`
+    <div class="sheet-head"><h2>${isPhoto ? '写真で記録' : '文字で記録'}</h2>${closeBtn}</div>
+    ${error ? `<div class="error">${esc(error)}</div>` : ''}
+    ${isPhoto ? `<img class="photo-preview" src="${draft.image}" alt="記録する食事の写真">` : ''}
+    <div class="field">
+      <label for="entryText">${isPhoto ? '補足(なくても大丈夫)' : '食べたもの'}</label>
+      <textarea class="input" id="entryText" placeholder="${isPhoto ? '例: ご飯は半分残した/ドレッシングなし' : '例: 牛丼並盛りと味噌汁、サラダ\n例: コンビニのツナマヨおにぎり2個とからあげクン'}">${esc(draft.text)}</textarea>
+      ${isPhoto ? '' : '<div class="hint">お店や商品名、量(大盛り・半分など)が分かると精度が上がります。</div>'}
+    </div>
+    <div class="field"><span class="lbl">種類</span>${typeSeg(draft)}</div>
+    <div class="field"><label for="entryTime">時刻(${esc(labelOf(draft.date))})</label><input class="input" type="time" id="entryTime" value="${draft.time}"></div>
+    ${useAI()
+      ? `<button class="btn btn-primary btn-block" id="btnAnalyze">${PROVIDERS[settings.provider].short}で判定する</button>
+         <button class="btn btn-text btn-block" id="btnCopyMode" style="margin-top:var(--s1)">チャットアプリで判定する(コピペ)</button>`
+      : `<button class="btn btn-primary btn-block" id="btnCopyMode">チャットアプリで判定する</button>
+         <div class="hint" style="text-align:center;margin-top:8px">設定でGeminiのAPIキーを入れると、このボタンひとつで判定できます。</div>`}
+  `);
+  bindTypeSeg(draft);
+  const collect = () => {
+    draft.text = $('#entryText').value.trim();
+    draft.time = $('#entryTime').value || draft.time;
+    if(!isPhoto && !draft.text){ $('#entryText').focus(); toast('食べたものを入力してください'); return false; }
+    return true;
+  };
+  $('#btnCopyMode').onclick = () => { if(collect()) openCopyAnalyze(draft); };
+  if(useAI()) $('#btnAnalyze').onclick = async () => {
+    if(!collect()) return;
+    showLoading(isPhoto ? '写真から料理と量を見ています…' : '内容から栄養を見積もっています…');
+    try{
+      Object.assign(draft, await analyze(draft));
+      openReview(draft);
+    }catch(err){
+      // 回数制限・通信エラーのときはそのままコピペ方式へ
+      if(['quota','network','busy'].includes(err.kind)) openCopyAnalyze(draft, '', err.message);
+      else openEntry(draft, err.message);
+    }
+  };
+}
+
+function showLoading(msg){
+  $('#sheetBody').innerHTML = `<div class="loading"><div class="spin"></div><div>${esc(msg)}</div></div>`;
+}
+
+/* ---------- review / edit ---------- */
+function openReview(draft, error){
+  const s = sumItems(draft.items);
+  const confLabel = {high:'確度 高', medium:'確度 中', low:'確度 低'}[draft.confidence] || '';
+  const itemsHtml = draft.items.length ? draft.items.map((it, idx) => `
+    <div class="item surface">
+      <div class="head">
+        <div><div class="name">${esc(it.name)}</div><div class="portion">${esc(it.portion)}${(it.mult ?? 1) !== 1 ? ` × ${it.mult}` : ''}</div></div>
+        <div class="kcal"><span class="num">${r0(val(it,'kcal'))}</span><span class="unit">kcal</span></div>
+      </div>
+      <div class="pfc">
+        <span><i class="dot" style="background:var(--p)"></i>たんぱく質 ${r1(val(it,'protein'))}g</span>
+        <span><i class="dot" style="background:var(--f)"></i>脂質 ${r1(val(it,'fat'))}g</span>
+        <span><i class="dot" style="background:var(--c)"></i>炭水化物 ${r1(val(it,'carbs'))}g</span>
+        <span>塩分 ${r1(val(it,'salt'))}g</span>
+      </div>
+      <div class="mults" role="group" aria-label="${esc(it.name)}の量">
+        ${MULTS.map(m => `<button type="button" data-i="${idx}" data-m="${m.v}" aria-pressed="${(it.mult ?? 1) === m.v}">${m.l}</button>`).join('')}
+        <button type="button" class="del" data-del="${idx}" aria-label="${esc(it.name)}を削除">削除</button>
+      </div>
+    </div>`).join('') : `<div class="empty">料理が見つかりませんでした。下の補足欄で内容を伝えて再判定できます。</div>`;
+
+  openSheet(`
+    <div class="sheet-head"><h2>${esc(draft.type)}の内容 ${confLabel ? `<span class="badge">${confLabel}</span>` : ''}</h2>${closeBtn}</div>
+    ${error ? `<div class="error">${esc(error)}</div>` : ''}
+    ${draft.note ? `<div class="note">${esc(draft.note)}</div>` : ''}
+    ${itemsHtml}
+    <div class="total"><span>合計</span><span><span class="num">${r0(s.kcal)}</span><span class="unit">kcal</span></span></div>
+    <div class="total-sub">たんぱく質 ${r0(s.protein)}g / 脂質 ${r0(s.fat)}g / 炭水化物 ${r0(s.carbs)}g。量が違うときは倍率をタップ</div>
+    <div class="field">
+      <label for="fixText">違うところを伝えて再判定</label>
+      <div class="row"><input class="input" id="fixText" placeholder="例: 唐揚げは3個、味噌汁はなし" style="flex:3"><button class="btn btn-secondary" id="btnFix" style="flex:1;padding:0 var(--s3)">再判定</button></div>
+    </div>
+    <div class="field"><span class="lbl">種類</span>${typeSeg(draft)}</div>
+    <div class="field"><label for="revTime">時刻</label><input class="input" type="time" id="revTime" value="${draft.time}"></div>
+    <button class="btn btn-primary btn-block" id="btnSave" ${draft.items.length ? '' : 'disabled'}>${draft.id ? '変更を保存' : 'この内容で記録'}</button>
+    ${draft.id ? `<div style="margin-top:var(--s2)"><button class="btn btn-text danger btn-block" id="btnDelMeal">この記録を削除</button></div>` : ''}
+  `);
+  bindTypeSeg(draft);
+  const keepTime = () => { draft.time = $('#revTime').value || draft.time; };
+
+  document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+    keepTime(); draft.items[+b.dataset.i].mult = +b.dataset.m; openReviewKeepScroll(draft);
+  });
+  document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    keepTime(); draft.items.splice(+b.dataset.del, 1); openReviewKeepScroll(draft);
+  });
+  $('#btnFix').onclick = async () => {
+    const fix = $('#fixText').value.trim();
+    if(!fix){ $('#fixText').focus(); return; }
+    keepTime();
+    if(!useAI()){ openCopyAnalyze(draft, fix); return; }
+    showLoading('修正を反映しています…');
+    try{
+      const prevText = draft.text;
+      Object.assign(draft, await analyze(draft, fix));
+      draft.text = prevText ? `${prevText} / ${fix}` : fix;
+      openReview(draft);
+    }catch(err){
+      if(['quota','network','busy'].includes(err.kind)) openCopyAnalyze(draft, fix, err.message);
+      else openReview(draft, err.message);
+    }
+  };
+  $('#btnSave').onclick = () => { keepTime(); saveMeal(draft); };
+  if(draft.id) $('#btnDelMeal').onclick = () => {
+    if(!confirm('この記録を削除しますか?')) return;
+    const d = day(draft.date); d.meals = d.meals.filter(m => m.id !== draft.id);
+    saveData(); closeSheet(); render(); toast('記録を削除しました');
+  };
+}
+function openReviewKeepScroll(draft){
+  const y = $('#sheet').scrollTop; openReview(draft); $('#sheet').scrollTop = y;
+}
+
+function saveMeal(draft){
+  const meal = {
+    id: draft.id || uid(), type: draft.type, time: draft.time, source: draft.source,
+    text: draft.text, thumb: draft.thumb, items: draft.items, note: draft.note, confidence: draft.confidence
+  };
+  const d = day(draft.date);
+  const i = d.meals.findIndex(m => m.id === meal.id);
+  if(i >= 0) d.meals[i] = meal; else d.meals.push(meal);
+  if(!saveData()){
+    meal.thumb = '';   // 容量不足時は写真なしで保存を試みる
+    if(!saveData()) return;
+  }
+  closeSheet(); render();
+  toast(draft.id ? '変更を保存しました' : '記録しました');
+}
+
+function openMeal(id){
+  const m = data.days[viewKey]?.meals.find(x => x.id === id); if(!m) return;
+  const draft = JSON.parse(JSON.stringify(m));
+  draft.date = viewKey; draft.image = '';
+  openReview(draft);
+}
+
+/* ---------- advice ---------- */
+const ADVICE_SYSTEM = `あなたは、前向きで現実的な管理栄養士です。ユーザーの1日の食事記録と目標から、次の食事や明日に向けた具体的な提案をします。
+ルール:
+- 日本語で、全体で200字前後。最初に1文で今日の様子をまとめ、そのあと「・」で始まる具体的な提案を2〜3個
+- 提案はコンビニや外食、家にありそうな食材で実行できるものにする(例: 「夜は鮭の塩焼きと冷奴でたんぱく質を足す」)
+- 食べすぎを責めたり罪悪感をあおったりしない。超えた日は「次でどう整えるか」を伝える
+- 食事を抜く、極端に減らす、目標カロリーを大きく下回ることはすすめない。記録が目標より大幅に少ない日は、しっかり食べるよう伝える
+- 塩分や食物繊維など、カロリー以外で気になる点があれば1つ触れる
+- 病気の診断や治療に関わる判断はしない
+- 記録された時刻と現在時刻から、この後に食事が残っているかを考える
+- 見出しや太字などの装飾は使わない`;
+
+function advicePrompt(){
+  const d = data.days[viewKey];
+  const t = targets();
+  const s = sumDay(viewKey);
+  const isToday = viewKey === dkey(new Date());
+  const meals = d.meals.slice().sort((a,b) => (a.time||'').localeCompare(b.time||'')).map(m => {
+    const ms = sumItems(m.items);
+    return `${m.type} ${m.time}: ${m.items.map(i => `${i.name}(${r0(val(i,'kcal'))}kcal)`).join('、')} 計${r0(ms.kcal)}kcal`;
+  }).join('\n');
+  return `日付: ${labelOf(viewKey)}${isToday ? `(今日・現在 ${nowTime()})` : '(過去の日の振り返り)'}
+目標: ${t ? `${t.kcal}kcal / たんぱく質${t.protein}g / 脂質${t.fat}g / 炭水化物${t.carbs}g / 食物繊維${t.fiber}g / 塩分${t.salt}g未満(目的: ${settings.goal === 'lose' ? 'ゆるやかに減量' : '体重を維持'})` : '未設定(一般的な成人の目安で判断)'}
+合計: ${r0(s.kcal)}kcal / たんぱく質${r0(s.protein)}g / 脂質${r0(s.fat)}g / 炭水化物${r0(s.carbs)}g / 食物繊維${r1(s.fiber)}g / 塩分${r1(s.salt)}g
+食事:
+${meals}`;
+}
+function saveAdvice(text){
+  const d = data.days[viewKey];
+  d.advice = {text: text.trim(), at: `${labelOf(viewKey)} ${nowTime()}`};
+  saveData(); renderAdvice();
+}
+
+async function getAdvice(){
+  const d = data.days[viewKey]; if(!d?.meals?.length) return;
+  if(!useAI()){ openCopyAdvice(); return; }
+  const box = $('#advice');
+  box.innerHTML = `<h3>アドバイス</h3><div class="loading" style="padding:var(--s4) 0"><div class="spin"></div><div>記録を読んでいます…</div></div>`;
+  try{
+    saveAdvice(await callAI({system:ADVICE_SYSTEM, text:advicePrompt(), maxTokens:800}));
+  }catch(err){
+    renderAdvice();
+    if(['quota','network','busy'].includes(err.kind)){ openCopyAdvice(err.message); return; }
+    box.insertAdjacentHTML('beforeend', `<div class="error" style="margin:var(--s3) 0 0">${esc(err.message)}</div>`);
+  }
+}
+
+function openCopyAdvice(error){
+  const d = data.days[viewKey]; if(!d?.meals?.length) return;
+  const prompt = `${ADVICE_SYSTEM}\n\n---\n${advicePrompt()}`;
+  openSheet(`
+    <div class="sheet-head"><h2>チャットアプリでアドバイス</h2>${closeBtn}</div>
+    ${error ? `<div class="error">${esc(error)}</div>` : ''}
+    <ol class="steps">
+      <li><div><b>依頼文をコピーします</b>
+        <div class="row"><button class="btn btn-primary" id="caCopy">依頼文をコピー</button></div></div></li>
+      <li><div><b>チャットアプリに貼り付けて送信</b><div class="hint">Claude・ChatGPT・Geminiなど、ふだん使っているアプリでOKです。</div></div></li>
+      <li><div><b>返ってきた答えを貼り付け</b>
+        <textarea class="input" id="caPaste" placeholder="アドバイスの文章をそのまま貼り付け" style="min-height:120px;font-size:14px;margin-bottom:var(--s2)"></textarea>
+        <div class="row">
+          <button class="btn btn-secondary" id="caFromClip">ペースト</button>
+          <button class="btn btn-primary" id="caSave">保存する</button>
+        </div></div></li>
+    </ol>
+  `);
+  $('#caCopy').onclick = async () => toast(await copyText(prompt) ? '依頼文をコピーしました' : 'コピーできませんでした');
+  $('#caFromClip').onclick = () => readClipboardInto('#caPaste');
+  $('#caSave').onclick = () => {
+    const t = $('#caPaste').value.trim();
+    if(!t){ $('#caPaste').focus(); return; }
+    saveAdvice(t); closeSheet(); toast('アドバイスを保存しました');
+  };
+}
+
+/* ---------- week ---------- */
+$('#btnWeek').onclick = () => {
+  const t = targets();
+  const end = fromKey(viewKey);
+  const days = [...Array(7)].map((_, i) => { const d = new Date(end); d.setDate(end.getDate() - 6 + i); return dkey(d); });
+  const vals = days.map(k => sumDay(k).kcal);
+  const max = Math.max(t?.kcal || 0, ...vals, 1000) * 1.12;
+  const W = 340, H = 200, top = 16, bottom = 28, bw = 30, gap = (W - bw*7) / 7;
+  const y = v => top + (H - top - bottom) * (1 - v/max);
+  const bars = days.map((k, i) => {
+    const x = gap/2 + i*(bw+gap), v = vals[i], d = fromKey(k);
+    const over = t && v > t.kcal;
+    return `<rect x="${x}" y="${y(v)}" width="${bw}" height="${Math.max(0, H - bottom - y(v))}" rx="6" fill="${v ? (over ? 'var(--celadon-deep)' : 'var(--celadon)') : 'transparent'}"/>
+      ${v ? `<text x="${x+bw/2}" y="${y(v)-4}" text-anchor="middle" font-size="10" fill="var(--muted)">${r0(v)}</text>` : ''}
+      <text x="${x+bw/2}" y="${H-10}" text-anchor="middle" font-size="11" fill="${k === viewKey ? 'var(--ink)' : 'var(--muted)'}" font-weight="${k === viewKey ? 700 : 400}">${d.getDate()}(${WD[d.getDay()]})</text>`;
+  }).join('');
+  const goalLine = t ? `<line x1="0" x2="${W}" y1="${y(t.kcal)}" y2="${y(t.kcal)}" stroke="var(--ink)" stroke-dasharray="4 4" stroke-width="1" opacity=".5"/><text x="${W}" y="${y(t.kcal)-4}" text-anchor="end" font-size="10" fill="var(--muted)">目標 ${t.kcal}</text>` : '';
+  const logged = vals.filter(v => v > 0);
+  const avg = logged.length ? r0(logged.reduce((a,b) => a+b, 0) / logged.length) : 0;
+  openSheet(`
+    <div class="sheet-head"><h2>この1週間</h2>${closeBtn}</div>
+    <div class="week"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="7日間のカロリー">${goalLine}${bars}</svg></div>
+    <p style="margin:12px 0 0;font-size:14px">記録した日の平均 <span class="num" style="font-size:22px">${avg}</span><span class="unit">kcal</span>(${logged.length}日分)</p>
+    <p class="hint">1日単位の増減より、1週間の平均がゆるやかに目標に近づいていれば十分です。</p>
+  `);
+};
+
+/* ---------- settings ---------- */
+$('#btnSettings').onclick = () => openSettings();
+function openSettings(welcome){
+  const s = settings;
+  openSheet(`
+    <div class="sheet-head"><h2>${welcome ? 'はじめに' : '設定'}</h2>${closeBtn}</div>
+    ${welcome ? `<p style="margin-top:0;font-size:14px">写真や文字から食事のカロリーと栄養を見積もり、目標に合わせて提案する自分用のアプリです。判定の方法とからだの情報を入れてください。記録はすべてこの端末の中だけに保存されます。</p>` : ''}
+    <div class="group-title first">判定</div>
+    <div class="field"><span class="lbl">判定の方法</span>
+      <div class="seg" id="sProv">${Object.entries(PROVIDERS).map(([k, v]) => `<button type="button" data-v="${k}" aria-pressed="${s.provider === k}">${v.label}</button>`).join('')}</div>
+    </div>
+    <div id="aiFields"></div>
+    <div class="group-title">からだと目標</div>
+    <div class="field"><span class="lbl">性別(基礎代謝の計算用)</span>
+      <div class="seg" id="sSex"><button type="button" data-v="female" aria-pressed="${s.sex === 'female'}">女性</button><button type="button" data-v="male" aria-pressed="${s.sex === 'male'}">男性</button></div>
+    </div>
+    <div class="grid3">
+      <div class="field"><label for="sAge">年齢</label><input class="input" id="sAge" type="number" inputmode="numeric" value="${esc(s.age)}"></div>
+      <div class="field"><label for="sHeight">身長 cm</label><input class="input" id="sHeight" type="number" inputmode="decimal" value="${esc(s.height)}"></div>
+      <div class="field"><label for="sWeight">体重 kg</label><input class="input" id="sWeight" type="number" inputmode="decimal" value="${esc(s.weight)}"></div>
+    </div>
+    <div class="field"><label for="sAct">ふだんの活動量</label>
+      <select class="input" id="sAct">${ACTIVITY.map(a => `<option value="${a.v}" ${+s.activity === a.v ? 'selected' : ''}>${a.l}</option>`).join('')}</select>
+    </div>
+    <div class="field"><span class="lbl">目的</span>
+      <div class="seg" id="sGoal"><button type="button" data-v="lose" aria-pressed="${s.goal === 'lose'}">ゆるやかに減量</button><button type="button" data-v="keep" aria-pressed="${s.goal === 'keep'}">維持</button></div>
+    </div>
+    <div class="field" id="paceField" ${s.goal === 'lose' ? '' : 'hidden'}><span class="lbl">ペース</span>
+      <div class="seg" id="sPace"><button type="button" data-v="gentle" aria-pressed="${s.pace === 'gentle'}">ゆっくり(-250kcal/日)</button><button type="button" data-v="normal" aria-pressed="${s.pace === 'normal'}">ふつう(-500kcal/日)</button></div>
+    </div>
+    <div class="note" id="targetPreview"></div>
+    <button class="btn btn-primary btn-block" id="btnSaveSettings">保存する</button>
+    ${welcome ? '' : `
+    <div class="group-title">データ</div>
+    <div class="field">
+      <div class="row"><button class="btn btn-secondary" id="btnExport">バックアップを保存</button><button class="btn btn-secondary" id="btnImport">バックアップから戻す</button></div>
+      <div class="hint">iPhoneでは、長く使わないとブラウザがデータを消すことがあります。ときどきバックアップしておくと安心です。</div>
+    </div>
+    <button class="btn btn-text danger btn-block" id="btnWipe">すべての記録を削除</button>`}
+    <p class="hint" style="margin-top:16px">数値はAIによる推定で、誤差があります。医療的な判断はしません。持病や服薬がある場合は、医師や管理栄養士の指示を優先してください。</p>
+  `);
+
+  const tmp = {...s};
+  const readAI = () => {
+    const k = $('#sKey'), m = $('#sModel');
+    if(k) tmp[tmp.provider + 'Key'] = k.value.trim();
+    if(m) tmp[tmp.provider + 'Model'] = m.value;
+  };
+  const renderAI = () => {
+    const p = tmp.provider;
+    if(p === 'copy'){
+      $('#aiFields').innerHTML = `<div class="note">APIキーなしで使えます。判定やアドバイスのたびに、依頼文をコピーしてチャットアプリ(Claude・ChatGPT・Geminiなど)に送り、答えを貼り付けて記録します。</div>`;
+      return;
+    }
+    const isG = p === 'gemini';
+    $('#aiFields').innerHTML = `
+      <div class="field">
+        <label for="sKey">${isG ? 'Gemini' : 'Claude'} APIキー</label>
+        <input class="input" id="sKey" type="password" autocomplete="off" value="${esc(tmp[p + 'Key'])}" placeholder="${isG ? 'AI Studioで発行したキー' : 'sk-ant-...'}">
+        <div class="hint">${isG
+          ? 'Google AI Studio(aistudio.google.com)で無料で発行できます。無料枠では、送った写真や内容がGoogleの製品改善に使われます。回数制限にかかったときは、自動でコピペ方式に切り替わります。'
+          : 'Claude Console(platform.claude.com)で発行します。作成時にワークスペースを選んでください。使った分だけ有料です。'}
+          キーはこの端末にだけ保存され、${isG ? 'Google' : 'Anthropic'}以外には送信されません。</div>
+      </div>
+      <div class="field">
+        <label for="sModel">使うモデル</label>
+        <select class="input" id="sModel">${PROVIDERS[p].models.map(m => `<option value="${m.id}" ${tmp[p + 'Model'] === m.id ? 'selected' : ''}>${m.label}</option>`).join('')}</select>
+      </div>`;
+  };
+  document.querySelectorAll('#sProv button').forEach(b => b.onclick = () => {
+    readAI(); tmp.provider = b.dataset.v;
+    document.querySelectorAll('#sProv button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    renderAI();
+  });
+  renderAI();
+  const bindSeg = (id, key, after) => document.querySelectorAll(`#${id} button`).forEach(b => b.onclick = () => {
+    tmp[key] = b.dataset.v;
+    document.querySelectorAll(`#${id} button`).forEach(x => x.setAttribute('aria-pressed', x === b));
+    after && after(); preview();
+  });
+  const read = () => { tmp.age = $('#sAge').value; tmp.height = $('#sHeight').value; tmp.weight = $('#sWeight').value; tmp.activity = +$('#sAct').value; };
+  const preview = () => {
+    read();
+    const keep = settings; settings = tmp; const t = targets(); settings = keep;
+    $('#targetPreview').innerHTML = t
+      ? `1日の目標 <b>${t.kcal} kcal</b>(たんぱく質 ${t.protein}g / 脂質 ${t.fat}g / 炭水化物 ${t.carbs}g)<br><span style="font-size:12px">基礎代謝 約${t.bmr} kcal・消費の目安 約${t.tdee} kcal。目標は基礎代謝や安全な下限を下回らないように調整しています。</span>`
+      : '年齢・身長・体重を入れると、1日の目標が計算されます。';
+  };
+  bindSeg('sSex', 'sex'); bindSeg('sGoal', 'goal', () => { $('#paceField').hidden = tmp.goal !== 'lose'; }); bindSeg('sPace', 'pace');
+  ['sAge','sHeight','sWeight','sAct'].forEach(id => $('#'+id).addEventListener('input', preview));
+  preview();
+
+  $('#btnSaveSettings').onclick = () => {
+    read();
+    readAI();
+    settings = tmp; saveSettings(); closeSheet(); render(); toast('設定を保存しました');
+  };
+  if(!welcome){
+    $('#btnExport').onclick = exportData;
+    $('#btnImport').onclick = () => { $('#importInput').value = ''; $('#importInput').click(); };
+    $('#btnWipe').onclick = () => {
+      if(!confirm('すべての食事記録とアドバイスを削除します。元に戻せません。よろしいですか?')) return;
+      data = {days:{}}; saveData(); closeSheet(); render(); toast('すべての記録を削除しました');
+    };
+  }
+}
+
+async function exportData(){
+  const name = `hodoyoku-backup-${dkey(new Date())}.json`;
+  const blob = new Blob([JSON.stringify({version:1, exportedAt:new Date().toISOString(), data}, null, 1)], {type:'application/json'});
+  const file = new File([blob], name, {type:'application/json'});
+  try{
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:name}); return; }
+  }catch(e){ if(e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+$('#importInput').onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  try{
+    const j = JSON.parse(await f.text());
+    const incoming = j.data?.days ? j.data : (j.days ? j : null);
+    if(!incoming) throw new Error();
+    if(!confirm('バックアップの記録をいまの記録に統合します。同じ記録は上書きされます。よろしいですか?')) return;
+    for(const [k, v] of Object.entries(incoming.days)){
+      const d = day(k);
+      for(const m of v.meals || []){ const i = d.meals.findIndex(x => x.id === m.id); if(i >= 0) d.meals[i] = m; else d.meals.push(m); }
+      if(v.advice && !d.advice) d.advice = v.advice;
+    }
+    saveData(); closeSheet(); render(); toast('バックアップから戻しました');
+  }catch{ toast('このファイルは読み込めませんでした'); }
+};
+
+/* ---------- date nav ---------- */
+function shift(n){ const d = fromKey(viewKey); d.setDate(d.getDate() + n); const k = dkey(d); if(k > dkey(new Date())) return; viewKey = k; render(); }
+$('#prevDay').onclick = () => shift(-1);
+$('#nextDay').onclick = () => shift(1);
+$('#goToday').onclick = () => { viewKey = dkey(new Date()); render(); };
+document.addEventListener('visibilitychange', () => { if(!document.hidden) render(); });
+
+/* ---------- start ---------- */
+render();
+if(!localStorage.getItem(SET_KEY)) openSettings(true);
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
