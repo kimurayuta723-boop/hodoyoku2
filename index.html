@@ -109,6 +109,15 @@ button.chip{min-height:28px}
 .meal .meta{font-size:12px;color:var(--muted)}
 .meal .names{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .meal .kcal{font-size:19px;white-space:nowrap}
+.weight{display:flex;align-items:center;gap:var(--s3);width:100%;text-align:left;border:0;padding:var(--s3) var(--s4);margin-top:var(--s5);box-shadow:var(--shadow)}
+.weight .body{flex:1;min-width:0}
+.weight .meta{font-size:12px;color:var(--muted)}
+.weight .side{text-align:right}
+.weight .go{font-size:14px;font-weight:500;color:var(--celadon-deep)}
+.weight-input{display:flex;align-items:center;gap:var(--s2)}
+.weight-input .input{font-family:var(--serif);font-weight:700;font-size:28px;text-align:center;font-feature-settings:"tnum";max-width:180px}
+.weight-input span{color:var(--muted)}
+.weight-input .input::-webkit-inner-spin-button,.weight-input .input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .empty{text-align:center;color:var(--muted);font-size:14px;padding:var(--s5) var(--s4);border:1.5px dashed var(--line);border-radius:var(--r-surface)}
 
 /* 情報の面: 淡い青磁、影なし */
@@ -200,6 +209,12 @@ textarea.input{min-height:100px;resize:vertical;line-height:1.6}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translateX(-50%) translateY(-16px);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:var(--r-pill);font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:40;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%)}
 .week svg{width:100%;height:auto;display:block}
+.period{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);margin:var(--s3) calc(var(--s2) * -1) var(--s2);text-align:center}
+.legend{display:flex;flex-wrap:wrap;gap:var(--s1) var(--s4);font-size:12px;color:var(--muted);margin:var(--s2) 0 var(--s1)}
+.legend .key{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend .key.dash{height:0;width:16px;border-radius:0;border-top:1.5px dashed var(--muted);vertical-align:3px}
+.period-label{font-weight:500;font-feature-settings:"tnum"}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s3);margin-top:var(--s5)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (prefers-reduced-motion: reduce){.ring,.sheet,.overlay,.btn,.bar i{transition:none}.spin{animation-duration:3s}}
 </style>
@@ -209,7 +224,7 @@ textarea.input{min-height:100px;resize:vertical;line-height:1.6}
   <header class="top">
     <div class="brand">ほどよく</div>
     <div class="top-actions">
-      <button class="icon-btn" id="btnWeek" aria-label="1週間の記録">
+      <button class="icon-btn" id="btnWeek" aria-label="記録の推移">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V11M10 20V6M15 20v-7M20 20V9"/></svg>
       </button>
       <button class="icon-btn" id="btnSettings" aria-label="設定">
@@ -230,6 +245,7 @@ textarea.input{min-height:100px;resize:vertical;line-height:1.6}
 
   <div class="nutri" id="nutri"></div>
   <div class="sub-nutri" id="subNutri"></div>
+  <div id="weightRow"></div>
 
   <div class="section-title">食事 <small id="mealCount"></small></div>
   <div id="meals"></div>
@@ -321,6 +337,8 @@ const pad = n => String(n).padStart(2,'0');
 const dkey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const fromKey = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); };
 const WD = ['日','月','火','水','木','金','土'];
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const md = k => { const d = fromKey(k); return `${d.getMonth()+1}/${d.getDate()}`; };
 const labelOf = k => { const d = fromKey(k); return `${d.getMonth()+1}月${d.getDate()}日(${WD[d.getDay()]})`; };
 const nowTime = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 function guessType(t){
@@ -371,6 +389,7 @@ function render(){
   const s = sumDay(viewKey);
   renderPlate(s, t);
   renderNutri(s, t);
+  renderWeight();
   renderMeals();
   renderAdvice();
 }
@@ -457,6 +476,78 @@ function renderAdvice(){
   $('#advice').innerHTML = html;
   $('#btnAdvice').onclick = getAdvice;
   if(has && useAI()) $('#btnAdviceCopy').onclick = () => openCopyAdvice();
+}
+
+/* ---------- weight ---------- */
+const weightOf = k => { const w = data.days[k]?.weight; return typeof w === 'number' ? w : null; };
+// 指定日以前で一番新しい体重
+function lastWeightBefore(k, inclusive = true){
+  const keys = Object.keys(data.days).filter(x => (inclusive ? x <= k : x < k) && weightOf(x) !== null).sort();
+  const key = keys[keys.length-1];
+  return key ? {key, w: weightOf(key)} : null;
+}
+function latestWeightKey(){
+  const keys = Object.keys(data.days).filter(x => weightOf(x) !== null).sort();
+  return keys[keys.length-1] || null;
+}
+
+function renderWeight(){
+  const w = weightOf(viewKey);
+  const prev = lastWeightBefore(viewKey, false);
+  let main, sub;
+  if(w !== null){
+    main = `<span class="num" style="font-size:22px">${w.toFixed(1)}</span><span class="unit">kg</span>`;
+    sub = prev ? `前回(${md(prev.key)})から ${fmtDiff(w - prev.w)}` : 'はじめての記録';
+  }else{
+    main = `<span style="color:var(--muted)">まだ記録していません</span>`;
+    sub = prev ? `前回 ${prev.w.toFixed(1)}kg(${md(prev.key)})` : '朝、同じタイミングで測るのがおすすめです';
+  }
+  $('#weightRow').innerHTML = `
+    <button class="weight surface" id="btnWeight" aria-label="体重を${w !== null ? '変更' : '記録'}">
+      <div class="body">
+        <div class="meta">体重</div>
+        <div>${main}</div>
+      </div>
+      <div class="side"><div class="meta">${sub}</div><div class="go">${w !== null ? '変更' : '記録する'}</div></div>
+    </button>`;
+  $('#btnWeight').onclick = () => openWeight();
+}
+const fmtDiff = d => Math.abs(d) < 0.05 ? '変化なし' : `${d > 0 ? '+' : '−'}${Math.abs(d).toFixed(1)}kg`;
+
+function openWeight(error){
+  const w = weightOf(viewKey);
+  const guess = w ?? lastWeightBefore(viewKey)?.w ?? (+settings.weight || '');
+  openSheet(`
+    <div class="sheet-head"><h2>体重</h2>${closeBtn}</div>
+    ${error ? `<div class="error">${esc(error)}</div>` : ''}
+    <div class="field">
+      <label for="wInput">${esc(labelOf(viewKey))}の体重</label>
+      <div class="weight-input"><input class="input" id="wInput" type="number" inputmode="decimal" step="0.1" min="20" max="300" value="${guess !== '' ? (+guess).toFixed(1) : ''}"><span>kg</span></div>
+      <div class="hint">体重は水分などで1日に1〜2kg変わることがあります。毎日の上下より、推移画面の長い期間の流れで見てください。いちばん新しい記録は、目標カロリーの計算にも使います。</div>
+    </div>
+    <button class="btn btn-primary btn-block" id="wSave">保存する</button>
+    ${w !== null ? `<button class="btn btn-text danger btn-block" id="wDel" style="margin-top:var(--s2)">この日の体重を削除</button>` : ''}
+  `);
+  const inp = $('#wInput');
+  setTimeout(() => { inp.focus(); inp.select(); }, 320);
+  $('#wSave').onclick = () => {
+    const v = Math.round(parseFloat(inp.value) * 10) / 10;
+    if(!(v >= 20 && v <= 300)){ openWeight('20〜300kgの範囲で入力してください。'); return; }
+    day(viewKey).weight = v;
+    if(!saveData()) return;
+    syncSettingsWeight();
+    closeSheet(); render(); toast('体重を記録しました');
+  };
+  if(w !== null) $('#wDel').onclick = () => {
+    if(!confirm('この日の体重を削除しますか?')) return;
+    delete data.days[viewKey].weight;
+    saveData(); syncSettingsWeight(); closeSheet(); render(); toast('体重を削除しました');
+  };
+}
+// 一番新しい体重の記録を、目標計算用の体重に反映する
+function syncSettingsWeight(){
+  const k = latestWeightKey();
+  if(k && String(weightOf(k)) !== String(settings.weight)){ settings.weight = String(weightOf(k)); saveSettings(); }
 }
 
 /* ---------- sheet ---------- */
@@ -880,7 +971,10 @@ function advicePrompt(){
     const ms = sumItems(m.items);
     return `${m.type} ${m.time}: ${m.items.map(i => `${i.name}(${r0(val(i,'kcal'))}kcal)`).join('、')} 計${r0(ms.kcal)}kcal`;
   }).join('\n');
-  return `日付: ${labelOf(viewKey)}${isToday ? `(今日・現在 ${nowTime()})` : '(過去の日の振り返り)'}
+  const wNow = lastWeightBefore(viewKey);
+  const wAgo = wNow ? lastWeightBefore(dkey(addDays(fromKey(viewKey), -7))) : null;
+  const wLine = wNow ? `\n体重: ${wNow.w.toFixed(1)}kg(${md(wNow.key)}時点)${wAgo ? `、1週間前 ${wAgo.w.toFixed(1)}kg` : ''}。体重の上下には触れすぎず、1週間以上の流れとして参考にする程度にする` : '';
+  return `日付: ${labelOf(viewKey)}${isToday ? `(今日・現在 ${nowTime()})` : '(過去の日の振り返り)'}${wLine}
 目標: ${t ? `${t.kcal}kcal / たんぱく質${t.protein}g / 脂質${t.fat}g / 炭水化物${t.carbs}g / 食物繊維${t.fiber}g / 塩分${t.salt}g未満(目的: ${settings.goal === 'lose' ? 'ゆるやかに減量' : '体重を維持'})` : '未設定(一般的な成人の目安で判断)'}
 合計: ${r0(s.kcal)}kcal / たんぱく質${r0(s.protein)}g / 脂質${r0(s.fat)}g / 炭水化物${r0(s.carbs)}g / 食物繊維${r1(s.fiber)}g / 塩分${r1(s.salt)}g
 食事:
@@ -933,32 +1027,185 @@ function openCopyAdvice(error){
   };
 }
 
-/* ---------- week ---------- */
-$('#btnWeek').onclick = () => {
-  const t = targets();
-  const end = fromKey(viewKey);
-  const days = [...Array(7)].map((_, i) => { const d = new Date(end); d.setDate(end.getDate() - 6 + i); return dkey(d); });
-  const vals = days.map(k => sumDay(k).kcal);
-  const max = Math.max(t?.kcal || 0, ...vals, 1000) * 1.12;
-  const W = 340, H = 200, top = 16, bottom = 28, bw = 30, gap = (W - bw*7) / 7;
-  const y = v => top + (H - top - bottom) * (1 - v/max);
-  const bars = days.map((k, i) => {
-    const x = gap/2 + i*(bw+gap), v = vals[i], d = fromKey(k);
-    const over = t && v > t.kcal;
-    return `<rect x="${x}" y="${y(v)}" width="${bw}" height="${Math.max(0, H - bottom - y(v))}" rx="6" fill="${v ? (over ? 'var(--celadon-deep)' : 'var(--celadon)') : 'transparent'}"/>
-      ${v ? `<text x="${x+bw/2}" y="${y(v)-4}" text-anchor="middle" font-size="10" fill="var(--muted)">${r0(v)}</text>` : ''}
-      <text x="${x+bw/2}" y="${H-10}" text-anchor="middle" font-size="11" fill="${k === viewKey ? 'var(--ink)' : 'var(--muted)'}" font-weight="${k === viewKey ? 700 : 400}">${d.getDate()}(${WD[d.getDay()]})</text>`;
-  }).join('');
-  const goalLine = t ? `<line x1="0" x2="${W}" y1="${y(t.kcal)}" y2="${y(t.kcal)}" stroke="var(--ink)" stroke-dasharray="4 4" stroke-width="1" opacity=".5"/><text x="${W}" y="${y(t.kcal)-4}" text-anchor="end" font-size="10" fill="var(--muted)">目標 ${t.kcal}</text>` : '';
-  const logged = vals.filter(v => v > 0);
-  const avg = logged.length ? r0(logged.reduce((a,b) => a+b, 0) / logged.length) : 0;
-  openSheet(`
-    <div class="sheet-head"><h2>この1週間</h2>${closeBtn}</div>
-    <div class="week"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="7日間のカロリー">${goalLine}${bars}</svg></div>
-    <p style="margin:12px 0 0;font-size:14px">記録した日の平均 <span class="num" style="font-size:22px">${avg}</span><span class="unit">kcal</span>(${logged.length}日分)</p>
-    <p class="hint">1日単位の増減より、1週間の平均がゆるやかに目標に近づいていれば十分です。</p>
-  `);
+/* ---------- history (推移) ---------- */
+const RANGES = {
+  week:    {label:'1週間'},
+  month:   {label:'1か月'},
+  quarter: {label:'3か月'},
+  year:    {label:'1年'}
 };
+let histRange = 'week', histOffset = 0;
+
+const dayRange = (end, n) => [...Array(n)].map((_, i) => dkey(addDays(end, i - n + 1)));
+
+// 期間を「棒1本ぶん」の単位に分ける
+function buildBuckets(range, offset){
+  const today = new Date(); today.setHours(0,0,0,0);
+  if(range === 'week' || range === 'month'){
+    const n = range === 'week' ? 7 : 30;
+    const end = addDays(today, -n*offset);
+    return dayRange(end, n).map((k, i) => {
+      const d = fromKey(k);
+      const label = n === 7 ? `${d.getDate()}(${WD[d.getDay()]})` : ((i % 5 === 4 || i === n-1) ? md(k) : '');
+      return {keys:[k], label, tapKey:k};
+    });
+  }
+  if(range === 'quarter'){
+    const end = addDays(today, -91*offset);
+    return [...Array(13)].map((_, w) => {
+      const keys = dayRange(addDays(end, -(12 - w)*7), 7);
+      return {keys, label: w % 2 === 0 || w === 12 ? md(keys[0]) : ''};
+    });
+  }
+  // year: 暦月ごと
+  const base = new Date(today.getFullYear(), today.getMonth() - 12*offset, 1);
+  return [...Array(12)].map((_, m) => {
+    const first = new Date(base.getFullYear(), base.getMonth() - 11 + m, 1);
+    const days = new Date(first.getFullYear(), first.getMonth()+1, 0).getDate();
+    const keys = [...Array(days)].map((_, i) => dkey(new Date(first.getFullYear(), first.getMonth(), i+1))).filter(k => k <= dkey(today));
+    return {keys, label: `${first.getMonth()+1}月`};
+  });
+}
+
+function openHistory(){
+  const t = targets();
+  const buckets = buildBuckets(histRange, histOffset);
+  const allKeys = buckets.flatMap(b => b.keys);
+  const logged = allKeys.filter(k => data.days[k]?.meals?.length);
+  const sums = Object.fromEntries(logged.map(k => [k, sumDay(k)]));
+
+  // 棒の値 = その単位の「記録した日」の1日平均
+  buckets.forEach(b => {
+    const ks = b.keys.filter(k => sums[k]);
+    b.days = ks.length;
+    b.v = ks.length ? ks.reduce((a, k) => a + sums[k].kcal, 0) / ks.length : 0;
+  });
+  const avg = key => logged.length ? logged.reduce((a, k) => a + sums[k][key], 0) / logged.length : 0;
+  const near = t ? logged.filter(k => Math.abs(sums[k].kcal - t.kcal) <= t.kcal*0.1).length : 0;
+
+  const first = allKeys[0], last = allKeys[allKeys.length-1];
+  const periodLabel = histRange === 'year'
+    ? `${fromKey(first).getFullYear()}年${fromKey(first).getMonth()+1}月〜${fromKey(last).getFullYear() !== fromKey(first).getFullYear() ? fromKey(last).getFullYear() + '年' : ''}${fromKey(last).getMonth()+1}月`
+    : `${labelOf(first)}〜${labelOf(last)}`;
+  const unitNote = {week:'1日ごと', month:'1日ごと', quarter:'1週間ごとの1日平均', year:'1か月ごとの1日平均'}[histRange];
+
+  // ---- chart ----
+  const W = 340, H = 210, top = 18, bottom = 26, n = buckets.length;
+  const slot = W / n, bw = Math.min(30, slot*0.62);
+  const max = Math.max(t?.kcal || 0, ...buckets.map(b => b.v), 1000) * 1.12;
+  const y = v => top + (H - top - bottom) * (1 - v/max);
+  const showVals = n <= 13;
+  const lab = (b, i, x) => {
+    const anchor = i === n-1 && n > 13 ? 'end' : 'middle', lx = anchor === 'end' ? W : x + bw/2, on = b.tapKey === viewKey;
+    return `<text x="${lx}" y="${H-8}" text-anchor="${anchor}" font-size="10" fill="${on ? 'var(--ink)' : 'var(--muted)'}" font-weight="${on ? 700 : 400}">${b.label}</text>`;
+  };
+  const bars = buckets.map((b, i) => {
+    const x = i*slot + (slot - bw)/2, v = b.v;
+    if(!v) return lab(b, i, x);
+    const base = t ? Math.min(v, t.kcal) : v, extra = t ? Math.max(0, v - t.kcal) : 0;
+    const r = Math.min(5, bw/2);
+    // 目標までは青磁、超えた分は濃い青磁を重ねる(ホームのリングと同じ考え方)
+    return `<g ${b.tapKey ? `data-day="${b.tapKey}" style="cursor:pointer"` : ''}>
+      <rect x="${i*slot}" y="${top}" width="${slot}" height="${H-top-bottom}" fill="transparent"/>
+      <rect x="${x}" y="${y(base)}" width="${bw}" height="${H-bottom-y(base)}" rx="${r}" fill="var(--celadon)"/>
+      ${extra ? `<rect x="${x}" y="${y(v)}" width="${bw}" height="${y(base)-y(v)+r}" rx="${r}" fill="var(--celadon-deep)"/>` : ''}
+      ${showVals ? `<text x="${x+bw/2}" y="${y(v)-5}" text-anchor="middle" font-size="${n > 7 ? 8.5 : 10}" fill="var(--muted)">${r0(v)}</text>` : ''}
+      ${lab(b, i, x)}
+    </g>`;
+  }).join('');
+  const goal = t ? `<line x1="0" x2="${W}" y1="${y(t.kcal)}" y2="${y(t.kcal)}" stroke="var(--ink)" stroke-dasharray="3 4" stroke-width="1" opacity=".45"/>` : '';
+
+  const pfcRows = [
+    {k:'protein', n:'たんぱく質', c:'var(--p)', u:'g'},
+    {k:'fat',     n:'脂質',       c:'var(--f)', u:'g'},
+    {k:'carbs',   n:'炭水化物',   c:'var(--c)', u:'g'}
+  ].map(r => {
+    const v = avg(r.k), g = t?.[r.k];
+    return `<div>
+      <div class="n-name"><i class="dot" style="background:${r.c}"></i>${r.n}</div>
+      <div class="n-val">${r0(v)}<small>${g ? ` / ${g}g` : 'g'}</small></div>
+      <div class="bar"><i style="width:${g ? Math.min(100, v/g*100) : 0}%;background:${r.c}"></i></div>
+    </div>`;
+  }).join('');
+
+  // ---- weight line (棒と同じ横位置にそろえる) ----
+  buckets.forEach(b => {
+    const ws = b.keys.map(weightOf).filter(w => w !== null);
+    b.w = ws.length ? ws.reduce((a, x) => a + x, 0) / ws.length : null;
+  });
+  const wPts = buckets.map((b, i) => b.w === null ? null : {i, w:b.w}).filter(Boolean);
+  let weightHtml;
+  if(wPts.length){
+    const WH = 150, wTop = 22, wBot = 26;
+    let lo = Math.min(...wPts.map(p => p.w)), hi = Math.max(...wPts.map(p => p.w));
+    const mid = (lo + hi)/2, span = Math.max(hi - lo, 2) / 2 + 0.4;
+    lo = mid - span; hi = mid + span;
+    const wy = w => wTop + (WH - wTop - wBot) * (1 - (w - lo)/(hi - lo));
+    const cx = i => i*slot + slot/2;
+    const path = wPts.map((p, j) => `${j ? 'L' : 'M'}${cx(p.i).toFixed(1)},${wy(p.w).toFixed(1)}`).join(' ');
+    const lastP = wPts[wPts.length-1], firstP = wPts[0];
+    const dots = wPts.map(p => `<circle cx="${cx(p.i)}" cy="${wy(p.w)}" r="${n > 13 ? 2.5 : 3.5}" fill="var(--plate)" stroke="var(--ink)" stroke-width="1.5"/>`).join('');
+    const lx = cx(lastP.i), anchor = lx > W - 30 ? 'end' : 'middle';
+    const wLabels = buckets.map((b, i) => b.label ? `<text x="${i === n-1 && n > 13 ? W : cx(i)}" y="${WH-8}" text-anchor="${i === n-1 && n > 13 ? 'end' : 'middle'}" font-size="10" fill="var(--muted)">${b.label}</text>` : '').join('');
+    const grid = [hi - 0.2*(hi-lo), lo + 0.2*(hi-lo)].map(g => `<line x1="0" x2="${W}" y1="${wy(g)}" y2="${wy(g)}" stroke="var(--line)" stroke-width="1"/><text x="0" y="${wy(g)-4}" font-size="9.5" fill="var(--muted)">${g.toFixed(1)}</text>`).join('');
+    const change = wPts.length > 1 ? fmtDiff(lastP.w - firstP.w) : '—';
+    weightHtml = `
+      <div class="week"><svg viewBox="0 0 ${W} ${WH}" role="img" aria-label="${RANGES[histRange].label}の体重の推移">
+        ${grid}
+        <path d="${path}" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity=".8"/>
+        ${dots}
+        ${wLabels}
+      </svg></div>
+      <div class="stats">
+        <div><div class="n-name">${histRange === 'week' || histRange === 'month' ? '最新' : '最後の平均'}</div><div><span class="num" style="font-size:24px">${lastP.w.toFixed(1)}</span><span class="unit">kg</span></div></div>
+        <div><div class="n-name">期間の変化</div><div><span class="num" style="font-size:24px">${change}</span></div></div>
+        <div><div class="n-name">測った日</div><div><span class="num" style="font-size:24px">${allKeys.filter(k => weightOf(k) !== null).length}</span><span class="unit">日</span></div></div>
+      </div>
+      ${histRange === 'quarter' || histRange === 'year' ? '<p class="hint">点は、それぞれの週・月に測った体重の平均です。</p>' : ''}`;
+  }else{
+    weightHtml = `<div class="empty">この期間の体重の記録はありません。ホーム画面の「体重」から記録できます。</div>`;
+  }
+
+  openSheet(`
+    <div class="sheet-head"><h2>記録の推移</h2>${closeBtn}</div>
+    <div class="seg" role="group" aria-label="期間">${Object.entries(RANGES).map(([k, v]) => `<button type="button" data-range="${k}" aria-pressed="${histRange === k}">${v.label}</button>`).join('')}</div>
+    <div class="period">
+      <button class="icon-btn" id="histPrev" aria-label="前の期間"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <div><div class="period-label">${periodLabel}</div><div class="hint" style="margin:0">${unitNote}</div></div>
+      <button class="icon-btn" id="histNext" aria-label="次の期間" ${histOffset === 0 ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="group-title first" style="margin-top:var(--s4)">カロリー</div>
+    ${logged.length ? `
+      <div class="legend">
+        <span><i class="key" style="background:var(--celadon)"></i>摂取</span>
+        ${t ? `<span><i class="key" style="background:var(--celadon-deep)"></i>目標を超えた分</span><span><i class="key dash"></i>目標 ${t.kcal}kcal</span>` : ''}
+      </div>
+      <div class="week"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${RANGES[histRange].label}のカロリー推移">${goal}${bars}</svg></div>
+      ${histRange === 'week' || histRange === 'month' ? '<div class="hint" style="text-align:center">棒をタップすると、その日の記録を開きます</div>' : ''}
+      <div class="stats">
+        <div><div class="n-name">1日の平均</div><div><span class="num" style="font-size:24px">${r0(avg('kcal'))}</span><span class="unit">kcal</span></div></div>
+        <div><div class="n-name">記録した日</div><div><span class="num" style="font-size:24px">${logged.length}</span><span class="unit">/ ${allKeys.length}日</span></div></div>
+        ${t ? `<div><div class="n-name">目標の前後10%</div><div><span class="num" style="font-size:24px">${near}</span><span class="unit">日</span></div></div>` : ''}
+      </div>
+      <div class="group-title">体重</div>
+      ${weightHtml}
+      <div class="group-title">栄養の1日平均</div>
+      <div class="nutri">${pfcRows}</div>
+      <div class="sub-nutri">
+        <span>食物繊維 ${r1(avg('fiber'))}${t ? ' / ' + t.fiber : ''}g</span>
+        <span>塩分 ${r1(avg('salt'))}${t ? ' / ' + t.salt : ''}g</span>
+      </div>
+      <p class="hint" style="margin-top:var(--s5)">平均は記録した日だけで計算しています。1日ごとの増減より、長い期間の平均がゆるやかに目標に近づいていれば十分です。</p>
+    ` : `<div class="empty" style="margin-top:var(--s3)">この期間の食事の記録はまだありません。</div>
+      <div class="group-title">体重</div>${weightHtml}`}
+  `);
+
+  document.querySelectorAll('[data-range]').forEach(b => b.onclick = () => { histRange = b.dataset.range; histOffset = 0; openHistory(); });
+  $('#histPrev').onclick = () => { histOffset++; openHistory(); };
+  $('#histNext').onclick = () => { if(histOffset > 0){ histOffset--; openHistory(); } };
+  document.querySelectorAll('[data-day]').forEach(g => g.onclick = () => { viewKey = g.dataset.day; closeSheet(); render(); });
+}
+$('#btnWeek').onclick = () => { histOffset = 0; openHistory(); };
 
 /* ---------- settings ---------- */
 $('#btnSettings').onclick = () => openSettings();
@@ -1088,6 +1335,7 @@ $('#importInput').onchange = async e => {
       const d = day(k);
       for(const m of v.meals || []){ const i = d.meals.findIndex(x => x.id === m.id); if(i >= 0) d.meals[i] = m; else d.meals.push(m); }
       if(v.advice && !d.advice) d.advice = v.advice;
+      if(typeof v.weight === 'number') d.weight = v.weight;
     }
     saveData(); closeSheet(); render(); toast('バックアップから戻しました');
   }catch{ toast('このファイルは読み込めませんでした'); }
