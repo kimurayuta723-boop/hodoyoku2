@@ -55,7 +55,7 @@
   }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+html,body{overflow-x:hidden;margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--celadon);outline-offset:2px}
@@ -158,6 +158,7 @@ button.chip{min-height:28px}
 .btn-block{width:100%}
 .row{display:flex;gap:var(--s2)}
 .row>*{flex:1;min-width:0}
+.field{min-width:0}
 .center{display:flex;justify-content:center}
 
 /* ---------- dock ---------- */
@@ -167,7 +168,7 @@ button.chip{min-height:28px}
 /* ---------- sheet ---------- */
 .overlay{position:fixed;inset:0;background:rgba(19,26,29,.45);z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
 .overlay.open{opacity:1;pointer-events:auto}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-height:92dvh;overflow:auto;overscroll-behavior:contain;background:var(--paper);border-radius:var(--r-sheet) var(--r-sheet) 0 0;padding:var(--s2) var(--s4) calc(env(safe-area-inset-bottom) + var(--s5));transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-height:92dvh;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;overscroll-behavior:contain;background:var(--paper);border-radius:var(--r-sheet) var(--r-sheet) 0 0;padding:var(--s2) var(--s4) calc(env(safe-area-inset-bottom) + var(--s5));transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
 .sheet.open{transform:none}
 .sheet-inner{max-width:520px;margin:0 auto}
 .grabber{width:36px;height:5px;border-radius:3px;background:var(--line);margin:var(--s1) auto var(--s2)}
@@ -179,10 +180,17 @@ button.chip{min-height:28px}
 /* ---------- form ---------- */
 .field{margin-bottom:var(--s4)}
 .field>label,.field>.lbl{display:block;font-size:13px;color:var(--muted);margin-bottom:var(--s1)}
-.input{width:100%;border:1.5px solid var(--line);background:var(--plate);border-radius:var(--r-field);padding:10px 12px;font-size:16px;min-height:46px}
+.input{max-width:100%;min-width:0;width:100%;border:1.5px solid var(--line);background:var(--plate);border-radius:var(--r-field);padding:10px 12px;font-size:16px;min-height:46px}
 textarea.input{min-height:84px;resize:vertical;line-height:1.6}
 .input:focus{border-color:var(--celadon);outline:none}
+/* iOSの時刻入力は標準のままだと横にはみ出すので、見た目をリセットして幅を決める */
+.input[type="time"]{-webkit-appearance:none;appearance:none;display:block;width:132px;text-align:left;line-height:24px}
+.input[type="time"]::-webkit-date-and-time-value{text-align:left;margin:0}
+.input[type="number"]{-webkit-appearance:none;appearance:none}
+img,svg{max-width:100%}
 .input::placeholder{color:var(--muted);opacity:.7}
+.inline-field{display:flex;align-items:center;gap:var(--s3)}
+.inline-field>label{margin:0!important;min-width:2.5em}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2)}
 .hint{font-size:12px;color:var(--muted);margin-top:var(--s1);line-height:1.6}
 .hint a{color:var(--celadon-deep)}
@@ -747,7 +755,26 @@ async function testConnection(s){
       }catch(e){ lines.push(`${mode === 'header' ? 'ヘッダー方式' : 'URL方式'}: ブラウザが通信を止めました(${e.message || e.name})`); }
     }
     settings = keep;
-    if(ok) return {ok:true, mode:ok, text: lines.join('\n') + (ok === 'query' ? '\nこの端末ではURL方式で判定します。' : '')};
+    if(ok){
+      // 実際の判定と同じ形(POST・JSON・本文あり)でも通るか確かめる
+      settings = {...s, geminiAuth: ok};
+      let genOk = false;
+      try{
+        const res = await geminiFetch(`models/${encodeURIComponent(s.geminiModel)}:generateContent`, {method:'POST', body: JSON.stringify({
+          contents:[{role:'user', parts:[{text:'「OK」とだけ返してください。'}]}], generationConfig:{maxOutputTokens:1024}
+        })});
+        if(res.ok){ lines.push('判定テスト: 成功しました'); genOk = true; }
+        else{
+          const ex = await explain(res);
+          lines.push(`判定テスト: エラー ${ex}`);
+          if(/429|RESOURCE_EXHAUSTED/.test(ex)) lines.push('無料枠の回数制限です。時間をおくと回復します。');
+          else if(/404/.test(ex)) lines.push('このモデルは使えないようです。「使うモデル」を変えて試してください。');
+          else if(/403|PERMISSION/.test(ex)) lines.push('このキーでは判定が許可されていません。AI Studioでキーを作り直してください。');
+        }
+      }catch(e){ lines.push(`判定テスト: ブラウザが通信を止めました(${e.message || e.name})`); }
+      settings = keep;
+      return {ok:genOk, mode:ok, text: lines.join('\n') + (genOk && ok === 'query' ? '\nこの端末ではURL方式で判定します。' : '')};
+    }
     const all = lines.join('\n');
     let hint = 'キーをもう一度コピーし直して貼り付けてみてください。';
     if(/401|UNAUTHENTICATED|ACCESS_TOKEN_TYPE/.test(all)) hint = 'キーが受け付けられていません。Google AI Studioで古いキーを削除し、新しく作り直したキーで試してください。';
@@ -984,7 +1011,7 @@ function openEntry(draft, error){
       ${isPhoto ? '' : '<div class="hint">お店や商品名、量(大盛り・半分など)が分かると精度が上がります。</div>'}
     </div>
     <div class="field"><span class="lbl">種類</span>${typeSeg(draft)}</div>
-    <div class="field"><label for="entryTime">時刻(${esc(labelOf(draft.date))})</label><input class="input" type="time" id="entryTime" value="${draft.time}"></div>
+    <div class="field inline-field"><label for="entryTime">時刻</label><input class="input" type="time" id="entryTime" value="${draft.time}"><span class="hint" style="margin:0">${esc(labelOf(draft.date))}</span></div>
     ${useAI()
       ? `<button class="btn btn-primary btn-block" id="btnAnalyze">${PROVIDERS[settings.provider].short}で判定する</button>
          <button class="btn btn-text btn-block" id="btnCopyMode" style="margin-top:var(--s1)">チャットアプリで判定する(コピペ)</button>`
@@ -1051,7 +1078,7 @@ function openReview(draft, error){
       <div class="row"><input class="input" id="fixText" placeholder="例: 唐揚げは3個、味噌汁はなし" style="flex:3"><button class="btn btn-secondary" id="btnFix" style="flex:1;padding:0 var(--s3)">再判定</button></div>
     </div>
     <div class="field"><span class="lbl">種類</span>${typeSeg(draft)}</div>
-    <div class="field"><label for="revTime">時刻</label><input class="input" type="time" id="revTime" value="${draft.time}"></div>
+    <div class="field inline-field"><label for="revTime">時刻</label><input class="input" type="time" id="revTime" value="${draft.time}"></div>
     <button class="btn btn-primary btn-block" id="btnSave" ${draft.items.length ? '' : 'disabled'}>${draft.id ? '変更を保存' : 'この内容で記録'}</button>
     ${draft.id ? `<div style="margin-top:var(--s2)"><button class="btn btn-text danger btn-block" id="btnDelMeal">この記録を削除</button></div>` : ''}
   `);
