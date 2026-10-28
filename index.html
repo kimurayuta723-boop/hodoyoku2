@@ -55,18 +55,19 @@
   }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--celadon);outline-offset:2px}
 .app{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top) + var(--s2)) var(--s4) calc(env(safe-area-inset-bottom) + 112px)}
 .num{font-family:var(--serif);font-weight:700;font-feature-settings:"lnum","tnum"}
+.num.stat{font-size:20px}
 .unit{font-family:var(--sans);font-weight:400;font-size:12px;color:var(--muted);margin-left:2px}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
 
 /* ---------- header ---------- */
 .top{display:flex;align-items:center;justify-content:space-between;height:52px}
-.brand{font-family:var(--serif);font-weight:700;font-size:20px;letter-spacing:.12em}
+.brand{font-family:var(--serif);font-weight:700;font-size:18px;letter-spacing:.1em}
 .icon-btn{width:44px;height:44px;border-radius:var(--r-pill);border:0;background:transparent;display:grid;place-items:center;color:var(--ink)}
 .icon-btn:active{background:var(--celadon-pale)}
 .icon-btn svg{width:22px;height:22px}
@@ -78,12 +79,12 @@ button{cursor:pointer}
 button.chip{min-height:28px}
 
 /* ---------- plate (hero) ---------- */
-.plate-wrap{display:grid;place-items:center;margin:var(--s3) 0 var(--s4)}
-.plate{position:relative;width:min(76vw,280px);aspect-ratio:1}
+.plate-wrap{display:grid;place-items:center;margin:var(--s2) 0 var(--s4)}
+.plate{position:relative;width:min(64vw,236px);aspect-ratio:1}
 .plate svg{width:100%;height:100%;display:block;overflow:visible}
 .plate-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-.plate-center .cap{font-size:13px;color:var(--muted)}
-.plate-center .big{font-size:56px;line-height:1.05}
+.plate-center .cap{font-size:12px;color:var(--muted)}
+.plate-center .big{font-size:44px;line-height:1.05}
 .plate-center .sub{margin-top:var(--s2);font-size:12px;color:var(--muted);font-feature-settings:"tnum"}
 .ring{transition:stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1)}
 
@@ -97,25 +98,42 @@ button.chip{min-height:28px}
 .sub-nutri{display:flex;gap:var(--s4);justify-content:center;font-size:12px;color:var(--muted);margin-top:var(--s3);font-feature-settings:"tnum"}
 
 /* ---------- sections ---------- */
-.section-title{font-family:var(--serif);font-weight:700;font-size:17px;letter-spacing:.04em;margin:var(--s6) 0 var(--s3);display:flex;align-items:baseline;justify-content:space-between}
+.section-title{font-family:var(--serif);font-weight:700;font-size:15px;letter-spacing:.04em;margin:var(--s5) 0 var(--s2);display:flex;align-items:baseline;justify-content:space-between}
 .section-title small{font-family:var(--sans);font-weight:400;font-size:12px;color:var(--muted);letter-spacing:0}
 
 /* 面(カード): 白い器。触れるものだけ影を持つ */
 .surface{background:var(--plate);border-radius:var(--r-surface)}
-.meal{display:flex;gap:var(--s3);align-items:center;width:100%;text-align:left;border:0;padding:var(--s3);margin-bottom:var(--s2);box-shadow:var(--shadow)}
+.meal{display:flex;gap:var(--s3);align-items:center;width:100%;text-align:left;border:0;padding:10px var(--s3);margin-bottom:var(--s2);box-shadow:var(--shadow)}
 .meal:active{transform:scale(.99)}
-.dish{width:52px;height:52px;border-radius:50%;flex:none;background:var(--celadon-pale) center/cover no-repeat;display:grid;place-items:center;color:var(--celadon-deep);font-family:var(--serif);font-weight:700;font-size:17px;box-shadow:0 0 0 3px var(--plate),0 0 0 4px var(--line)}
+.dish{width:42px;height:42px;border-radius:50%;flex:none;background:var(--celadon-pale) center/cover no-repeat;display:grid;place-items:center;color:var(--celadon-deep);font-family:var(--serif);font-weight:700;font-size:15px;box-shadow:0 0 0 3px var(--plate),0 0 0 4px var(--line)}
 .meal .body{flex:1;min-width:0}
 .meal .meta{font-size:12px;color:var(--muted)}
 .meal .names{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.meal .kcal{font-size:19px;white-space:nowrap}
+.meal .kcal{font-size:17px;white-space:nowrap}
+.body-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2);margin-top:var(--s5)}
+.mini{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;padding:10px var(--s3);box-shadow:var(--shadow);min-height:84px}
+.mini .meta{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mini .val{line-height:30px;white-space:nowrap}
+.mini .empty-val{font-weight:500;color:var(--celadon-deep);line-height:30px}
+.mini:active{transform:scale(.99)}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.choices button,.quick button{border:1.5px solid var(--line);background:var(--plate);border-radius:var(--r-pill);min-height:36px;padding:0 6px;font-size:13px;color:var(--ink)}
+.choices button[aria-pressed="true"],.quick button[aria-pressed="true"]{background:var(--celadon-deep);border-color:var(--celadon-deep);color:var(--on-accent);font-weight:700}
+.quick{display:flex;gap:6px;flex:1}
+.quick button{flex:1;min-width:0}
+.ex-list{background:var(--plate);border-radius:var(--r-surface);padding:var(--s1) var(--s3);margin-bottom:var(--s4);box-shadow:var(--shadow)}
+.ex-row{display:flex;justify-content:space-between;align-items:center;gap:var(--s2);padding:var(--s2) 0;border-bottom:1px solid var(--line)}
+.ex-row .meta{font-size:12px;color:var(--muted)}
+.ex-right{display:flex;align-items:center;gap:2px;white-space:nowrap}
+.ex-right .btn-text{min-height:36px;font-size:13px}
+.ex-total{display:flex;justify-content:space-between;align-items:baseline;padding:var(--s2) 0;font-size:13px;color:var(--muted)}
 .weight{display:flex;align-items:center;gap:var(--s3);width:100%;text-align:left;border:0;padding:var(--s3) var(--s4);margin-top:var(--s5);box-shadow:var(--shadow)}
 .weight .body{flex:1;min-width:0}
 .weight .meta{font-size:12px;color:var(--muted)}
 .weight .side{text-align:right}
 .weight .go{font-size:14px;font-weight:500;color:var(--celadon-deep)}
 .weight-input{display:flex;align-items:center;gap:var(--s2)}
-.weight-input .input{font-family:var(--serif);font-weight:700;font-size:28px;text-align:center;font-feature-settings:"tnum";max-width:180px}
+.weight-input .input{font-family:var(--serif);font-weight:700;font-size:22px;text-align:center;font-feature-settings:"tnum";max-width:150px}
 .weight-input span{color:var(--muted)}
 .weight-input .input::-webkit-inner-spin-button,.weight-input .input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .empty{text-align:center;color:var(--muted);font-size:14px;padding:var(--s5) var(--s4);border:1.5px dashed var(--line);border-radius:var(--r-surface)}
@@ -123,13 +141,13 @@ button.chip{min-height:28px}
 /* 情報の面: 淡い青磁、影なし */
 .panel{background:var(--celadon-pale);border-radius:var(--r-surface);padding:var(--s4)}
 .advice{margin-top:var(--s6)}
-.advice h3{margin:0 0 var(--s2);font-family:var(--serif);font-size:17px;letter-spacing:.04em}
-.advice .text{white-space:pre-wrap;font-size:15px}
+.advice h3{margin:0 0 var(--s1);font-family:var(--serif);font-size:15px;letter-spacing:.04em}
+.advice .text{white-space:pre-wrap;font-size:14px}
 .advice .meta{font-size:11px;color:var(--muted);margin-top:var(--s2)}
 .advice .actions{display:flex;flex-direction:column;align-items:stretch;margin-top:var(--s3)}
 
 /* ---------- buttons: 3種類だけ ---------- */
-.btn{border:1.5px solid transparent;border-radius:var(--r-pill);padding:0 var(--s4);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:50px;white-space:nowrap;transition:transform .1s}
+.btn{border:1.5px solid transparent;border-radius:var(--r-pill);padding:0 var(--s4);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:46px;font-size:15px;white-space:nowrap;transition:transform .1s}
 .btn:active{transform:scale(.98)}
 .btn svg{width:20px;height:20px;flex:none}
 .btn-primary{background:var(--celadon-deep);color:var(--on-accent)}
@@ -154,15 +172,15 @@ button.chip{min-height:28px}
 .sheet-inner{max-width:520px;margin:0 auto}
 .grabber{width:36px;height:5px;border-radius:3px;background:var(--line);margin:var(--s1) auto var(--s2)}
 .sheet-head{display:flex;justify-content:space-between;align-items:center;gap:var(--s2);margin:0 calc(var(--s2) * -1) var(--s3) 0}
-.sheet-head h2{font-family:var(--serif);font-size:20px;letter-spacing:.04em;margin:0;display:flex;align-items:center;gap:var(--s2)}
-.group-title{font-family:var(--serif);font-weight:700;font-size:15px;letter-spacing:.04em;margin:var(--s5) 0 var(--s3);padding-top:var(--s5);border-top:1.5px solid var(--line)}
+.sheet-head h2{font-family:var(--serif);font-size:18px;letter-spacing:.02em;margin:0;display:flex;align-items:center;gap:var(--s2)}
+.group-title{font-family:var(--serif);font-weight:700;font-size:14px;letter-spacing:.04em;margin:var(--s5) 0 var(--s3);padding-top:var(--s5);border-top:1.5px solid var(--line)}
 .group-title.first{margin-top:0;padding-top:0;border-top:0}
 
 /* ---------- form ---------- */
 .field{margin-bottom:var(--s4)}
 .field>label,.field>.lbl{display:block;font-size:13px;color:var(--muted);margin-bottom:var(--s1)}
-.input{width:100%;border:1.5px solid var(--line);background:var(--plate);border-radius:var(--r-field);padding:12px 14px;font-size:16px;min-height:50px}
-textarea.input{min-height:100px;resize:vertical;line-height:1.6}
+.input{width:100%;border:1.5px solid var(--line);background:var(--plate);border-radius:var(--r-field);padding:10px 12px;font-size:16px;min-height:46px}
+textarea.input{min-height:84px;resize:vertical;line-height:1.6}
 .input:focus{border-color:var(--celadon);outline:none}
 .input::placeholder{color:var(--muted);opacity:.7}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2)}
@@ -171,23 +189,23 @@ textarea.input{min-height:100px;resize:vertical;line-height:1.6}
 
 /* 選択状態はすべてこの見た目に統一 */
 .seg{display:flex;background:var(--plate);border:1.5px solid var(--line);border-radius:var(--r-field);padding:3px;gap:3px}
-.seg button{flex:1;border:0;background:transparent;border-radius:var(--r-inner);min-height:40px;padding:0 4px;font-size:14px;color:var(--ink)}
+.seg button{flex:1;border:0;background:transparent;border-radius:var(--r-inner);min-height:36px;padding:0 4px;font-size:14px;color:var(--ink)}
 .seg button[aria-pressed="true"],.mults button[aria-pressed="true"]{background:var(--celadon-deep);color:var(--on-accent);font-weight:700;border-color:var(--celadon-deep)}
 
-.photo-preview{width:100%;max-height:240px;object-fit:cover;border-radius:var(--r-surface);display:block;margin-bottom:var(--s4)}
+.photo-preview{width:100%;max-height:200px;object-fit:cover;border-radius:var(--r-surface);display:block;margin-bottom:var(--s4)}
 
 /* ---------- review ---------- */
 .item{padding:var(--s3) var(--s4);margin-bottom:var(--s2);box-shadow:var(--shadow)}
 .item .head{display:flex;justify-content:space-between;gap:var(--s2);align-items:baseline}
 .item .name{font-weight:700}
 .item .portion{font-size:12px;color:var(--muted)}
-.item .kcal{font-size:21px;white-space:nowrap}
+.item .kcal{font-size:18px;white-space:nowrap}
 .item .pfc{display:flex;flex-wrap:wrap;column-gap:var(--s3);font-size:12px;color:var(--muted);margin:var(--s1) 0 var(--s3);font-feature-settings:"tnum"}
 .mults{display:flex;gap:var(--s1);align-items:center}
-.mults button{border:1.5px solid var(--line);background:transparent;border-radius:var(--r-pill);min-width:38px;height:36px;padding:0 6px;font-size:14px;color:var(--ink)}
+.mults button{border:1.5px solid var(--line);background:transparent;border-radius:var(--r-pill);min-width:36px;height:32px;padding:0 6px;font-size:14px;color:var(--ink)}
 .mults .del{margin-left:auto;border:0;color:var(--danger);padding:0 var(--s1);min-width:0}
 .total{display:flex;justify-content:space-between;align-items:baseline;padding:var(--s3) var(--s1) 0;margin-top:var(--s1)}
-.total .num{font-size:28px}
+.total .num{font-size:22px}
 .total-sub{font-size:12px;color:var(--muted);padding:0 var(--s1);margin-bottom:var(--s5);font-feature-settings:"tnum"}
 .note{font-size:13px;color:var(--muted);background:var(--celadon-pale);border-radius:var(--r-field);padding:var(--s3) 14px;margin-bottom:var(--s3)}
 .badge{font-family:var(--sans);font-size:11px;font-weight:500;border-radius:var(--r-pill);padding:1px 8px;border:1px solid var(--line);color:var(--muted);letter-spacing:0}
@@ -198,7 +216,10 @@ textarea.input{min-height:100px;resize:vertical;line-height:1.6}
 .steps li:not(:last-child)::after{content:"";position:absolute;left:13px;top:32px;bottom:6px;width:1.5px;background:var(--line)}
 .steps li::before{content:counter(st);flex:none;width:28px;height:28px;border-radius:50%;background:var(--celadon-pale);color:var(--celadon-deep);font-family:var(--serif);font-weight:700;display:grid;place-items:center;font-size:14px}
 .steps li>div{flex:1;min-width:0;padding-top:2px}
-.steps b{display:block;margin-bottom:var(--s2)}
+.steps b{display:block;margin-bottom:var(--s2);font-size:14px}
+.steps .row{justify-content:flex-start}
+.steps .row>*{flex:0 1 auto}
+.btn-sm{min-height:38px;padding:0 var(--s4);font-size:14px}
 .steps .step-title{font-weight:700;margin-bottom:var(--s2)}
 
 /* ---------- feedback ---------- */
@@ -310,7 +331,7 @@ function save(key, val){
   catch(e){ toast('端末の保存容量がいっぱいです。設定からバックアップして古い写真を整理してください'); return false; }
 }
 let settings = Object.assign({
-  provider:'gemini',
+  provider:'gemini', geminiAuth:'header', addExercise:true,
   geminiKey:'', geminiModel:'gemini-3.8-flash',
   claudeKey:'', claudeModel:'claude-sonnet-5-5',
   sex:'female', age:'', height:'', weight:'', activity:1.375,
@@ -387,9 +408,10 @@ function render(){
 
   const t = targets();
   const s = sumDay(viewKey);
-  renderPlate(s, t);
+  const add = exAddToGoal(viewKey);
+  renderPlate(s, t ? {...t, kcal: t.kcal + add, base: t.kcal, add} : null);
   renderNutri(s, t);
-  renderWeight();
+  renderBody();
   renderMeals();
   renderAdvice();
 }
@@ -403,7 +425,7 @@ function renderPlate(s, t){
   if(!t){
     center = `<div class="cap">今日の合計</div><div class="big num">${r0(s.kcal)}</div><div class="unit">kcal</div><div class="sub">目標は設定から決められます</div>`;
   }else if(ratio <= 1){
-    center = `<div class="cap">あと</div><div class="big num">${r0(t.kcal - s.kcal)}</div><div class="unit">kcal</div><div class="sub">${r0(s.kcal)} / ${t.kcal} kcal</div>`;
+    center = `<div class="cap">あと</div><div class="big num">${r0(t.kcal - s.kcal)}</div><div class="unit">kcal</div><div class="sub">${r0(s.kcal)} / ${t.kcal} kcal${t.add ? `<br>運動 +${t.add} を含む` : ''}</div>`;
   }else{
     center = `<div class="cap">目標より</div><div class="big num">+${r0(s.kcal - t.kcal)}</div><div class="unit">kcal</div><div class="sub">明日で整えれば大丈夫</div>`;
   }
@@ -496,7 +518,7 @@ function renderWeight(){
   const prev = lastWeightBefore(viewKey, false);
   let main, sub;
   if(w !== null){
-    main = `<span class="num" style="font-size:22px">${w.toFixed(1)}</span><span class="unit">kg</span>`;
+    main = `<span class="num stat">${w.toFixed(1)}</span><span class="unit">kg</span>`;
     sub = prev ? `前回(${md(prev.key)})から ${fmtDiff(w - prev.w)}` : 'はじめての記録';
   }else{
     main = `<span style="color:var(--muted)">まだ記録していません</span>`;
@@ -550,6 +572,108 @@ function syncSettingsWeight(){
   if(k && String(weightOf(k)) !== String(settings.weight)){ settings.weight = String(weightOf(k)); saveSettings(); }
 }
 
+/* ---------- exercise ---------- */
+// METs(運動の強さ)は国立健康・栄養研究所「改訂版 身体活動のメッツ表」の代表的な値をもとにした目安
+const EXERCISES = [
+  {id:'walk',   name:'ウォーキング',   mets:3.5},
+  {id:'brisk',  name:'早歩き',         mets:4.3},
+  {id:'jog',    name:'ジョギング',     mets:7.0},
+  {id:'run',    name:'ランニング',     mets:9.0},
+  {id:'bike',   name:'自転車',         mets:6.8},
+  {id:'gym',    name:'筋トレ',         mets:5.0},
+  {id:'yoga',   name:'ヨガ・ストレッチ', mets:2.5},
+  {id:'swim',   name:'水泳',           mets:6.0},
+  {id:'other',  name:'その他',         mets:null}
+];
+const exList = k => data.days[k]?.exercise || [];
+const exKcal = k => exList(k).reduce((a, e) => a + (Number(e.kcal) || 0), 0);
+const exMinutes = k => exList(k).reduce((a, e) => a + (Number(e.minutes) || 0), 0);
+const bodyWeight = () => lastWeightBefore(viewKey)?.w || +settings.weight || 60;
+// 安静時の消費を除いた分: (METs − 1) × 体重 × 時間 × 1.05
+const exEstimate = (mets, minutes, w) => Math.max(0, Math.round((mets - 1) * w * (minutes/60) * 1.05 / 5) * 5);
+const exAddToGoal = k => settings.addExercise ? exKcal(k) : 0;
+
+function renderBody(){
+  const w = weightOf(viewKey);
+  const prev = lastWeightBefore(viewKey, false);
+  const wVal = w !== null ? `<span class="num stat">${w.toFixed(1)}</span><span class="unit">kg</span>` : `<span class="empty-val">記録する</span>`;
+  const wSub = w !== null ? (prev ? `前回から ${fmtDiff(w - prev.w)}` : 'はじめての記録') : (prev ? `前回 ${prev.w.toFixed(1)}kg` : '朝に測るのがおすすめ');
+  const ex = exList(viewKey), ek = exKcal(viewKey);
+  const eVal = ex.length ? `<span class="num stat">${ek}</span><span class="unit">kcal</span>` : `<span class="empty-val">記録する</span>`;
+  const eSub = ex.length ? (ex.length === 1 ? `${ex[0].name} ${ex[0].minutes}分` : `${ex.length}件・${exMinutes(viewKey)}分`) : 'ウォーキングなど';
+  $('#weightRow').innerHTML = `
+    <div class="body-grid">
+      <button class="mini surface" id="btnWeight"><span class="meta">体重</span><span class="val">${wVal}</span><span class="meta">${esc(wSub)}</span></button>
+      <button class="mini surface" id="btnExercise"><span class="meta">運動</span><span class="val">${eVal}</span><span class="meta">${esc(eSub)}</span></button>
+    </div>`;
+  $('#btnWeight').onclick = () => openWeight();
+  $('#btnExercise').onclick = () => openExercise();
+}
+
+function openExercise(state = {}){
+  const st = Object.assign({type:'walk', minutes:30, name:'', kcal:''}, state);
+  const w = bodyWeight();
+  const list = exList(viewKey);
+  const def = EXERCISES.find(e => e.id === st.type);
+  const est = def.mets ? exEstimate(def.mets, +st.minutes || 0, w) : (+st.kcal || 0);
+  openSheet(`
+    <div class="sheet-head"><h2>運動</h2>${closeBtn}</div>
+    ${st.error ? `<div class="error">${esc(st.error)}</div>` : ''}
+    ${list.length ? `<div class="ex-list">${list.map(e => `
+      <div class="ex-row"><div><b>${esc(e.name)}</b> <span class="meta">${e.minutes ? e.minutes + '分' : ''}</span></div>
+        <div class="ex-right"><span class="num">${e.kcal}</span><span class="unit">kcal</span><button class="btn btn-text danger" data-exdel="${e.id}" aria-label="${esc(e.name)}を削除">削除</button></div></div>`).join('')}
+      <div class="ex-total"><span>${esc(labelOf(viewKey))}の合計</span><span><span class="num">${exKcal(viewKey)}</span><span class="unit">kcal</span></span></div>
+    </div>` : ''}
+    <div class="field"><span class="lbl">種類</span>
+      <div class="choices">${EXERCISES.map(e => `<button type="button" data-ex="${e.id}" aria-pressed="${st.type === e.id}">${e.name}</button>`).join('')}</div>
+    </div>
+    ${st.type === 'other' ? `
+      <div class="field"><label for="exName">運動の名前</label><input class="input" id="exName" value="${esc(st.name)}" placeholder="例: テニス"></div>` : ''}
+    <div class="field"><label for="exMin">時間(分)</label>
+      <div class="row" style="align-items:center">
+        <input class="input" id="exMin" type="number" inputmode="numeric" min="1" max="600" value="${esc(st.minutes)}" style="max-width:96px;text-align:center">
+        <div class="quick">${[15, 30, 45, 60].map(m => `<button type="button" data-min="${m}" aria-pressed="${+st.minutes === m}">${m}</button>`).join('')}</div>
+      </div>
+    </div>
+    ${st.type === 'other' ? `
+      <div class="field"><label for="exKcal">消費カロリー(分かれば)</label><input class="input" id="exKcal" type="number" inputmode="numeric" value="${esc(st.kcal)}" placeholder="例: 200" style="max-width:140px"><div class="hint">運動アプリやマシンの表示があれば、その数字を入れてください。</div></div>` : `
+      <div class="note">消費の目安 <span class="num" id="exPreview" style="font-size:18px;color:var(--ink)">${est}</span> kcal<br><span style="font-size:12px">体重${w.toFixed(1)}kgで計算した、安静時の消費を除いた分です。</span></div>`}
+    <button class="btn btn-primary btn-block" id="exAdd">追加する</button>
+    <p class="hint" style="margin-top:var(--s3)">通勤や家事など毎日の活動は、設定の「ふだんの活動量」に含まれています。ここには、それ以外の運動を記録してください。${settings.addExercise ? '記録した分は、その日の目標カロリーに足されます。' : ''}</p>
+  `);
+  const read = () => ({...st, minutes: $('#exMin').value, name: $('#exName')?.value ?? st.name, kcal: $('#exKcal')?.value ?? st.kcal, error:''});
+  document.querySelectorAll('[data-ex]').forEach(b => b.onclick = () => openExerciseKeep({...read(), type: b.dataset.ex}));
+  // 時間の変更は画面を作り直さず、その場で表示だけ更新する(タップの取りこぼしを防ぐ)
+  const refresh = () => {
+    const m = +$('#exMin').value || 0;
+    document.querySelectorAll('[data-min]').forEach(x => x.setAttribute('aria-pressed', +x.dataset.min === m));
+    if(def.mets && $('#exPreview')) $('#exPreview').textContent = exEstimate(def.mets, m, w);
+  };
+  document.querySelectorAll('[data-min]').forEach(b => b.onclick = () => { $('#exMin').value = b.dataset.min; refresh(); });
+  $('#exMin').addEventListener('input', refresh);
+  document.querySelectorAll('[data-exdel]').forEach(b => b.onclick = () => {
+    const d = day(viewKey); d.exercise = (d.exercise || []).filter(e => e.id !== b.dataset.exdel);
+    saveData(); render(); openExerciseKeep(read()); toast('運動を削除しました');
+  });
+  $('#exAdd').onclick = () => {
+    const s = read();
+    const minutes = Math.round(+s.minutes);
+    if(!(minutes >= 1 && minutes <= 600)){ openExerciseKeep({...s, error:'時間は1〜600分で入力してください。'}); return; }
+    let name = def.name, kcal;
+    if(def.mets){ kcal = exEstimate(def.mets, minutes, w); }
+    else{
+      name = (s.name || '').trim() || 'その他の運動';
+      kcal = Math.round(+s.kcal);
+      if(!(kcal >= 0 && kcal <= 3000) || s.kcal === ''){ openExerciseKeep({...s, error:'消費カロリーを0〜3000の範囲で入力してください。'}); return; }
+    }
+    const d = day(viewKey); d.exercise = d.exercise || [];
+    d.exercise.push({id: uid(), type: def.id, name, minutes, kcal});
+    if(!saveData()) return;
+    render(); closeSheet(); toast(`${name}を記録しました`);
+  };
+}
+function openExerciseKeep(state){ const y = $('#sheet').scrollTop; openExercise(state); $('#sheet').scrollTop = y; }
+
 /* ---------- sheet ---------- */
 let sheetCloseHook = null;
 function openSheet(html){
@@ -600,6 +724,49 @@ async function callAI({system, text, image, json = false, maxTokens = 1500}){
   return settings.provider === 'gemini' ? callGemini({system, text, image, json, maxTokens}) : callClaude({system, text, image, maxTokens});
 }
 
+// 認証はヘッダー(x-goog-api-key)が基本。接続テストでヘッダーが通らずURL方式なら通ったときは、URL方式を使う
+function geminiFetch(path, opts = {}){
+  const useQuery = settings.geminiAuth === 'query';
+  const url = `https://generativelanguage.googleapis.com/v1beta/${path}${useQuery ? (path.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(settings.geminiKey) : ''}`;
+  const headers = {...(opts.body ? {'content-type':'application/json'} : {}), ...(useQuery ? {} : {'x-goog-api-key':settings.geminiKey})};
+  return fetch(url, {...opts, headers});
+}
+
+async function testConnection(s){
+  const lines = [];
+  const explain = async res => { let st = '', msg = ''; try{ const e = (await res.json()).error || {}; st = e.status || ''; msg = e.message || ''; }catch{} return `${res.status}${st ? ' ' + st : ''}${msg ? ': ' + msg : ''}`; };
+  if(s.provider === 'gemini'){
+    if(!s.geminiKey) return {ok:false, text:'APIキーを入力してください。'};
+    const keep = settings; let ok = false;
+    for(const mode of ['header', 'query']){
+      settings = {...s, geminiAuth: mode};
+      try{
+        const res = await geminiFetch(`models/${encodeURIComponent(s.geminiModel)}`);
+        if(res.ok){ lines.push(`${mode === 'header' ? 'ヘッダー方式' : 'URL方式'}: 接続できました`); ok = mode; break; }
+        lines.push(`${mode === 'header' ? 'ヘッダー方式' : 'URL方式'}: エラー ${await explain(res)}`);
+      }catch(e){ lines.push(`${mode === 'header' ? 'ヘッダー方式' : 'URL方式'}: ブラウザが通信を止めました(${e.message || e.name})`); }
+    }
+    settings = keep;
+    if(ok) return {ok:true, mode:ok, text: lines.join('\n') + (ok === 'query' ? '\nこの端末ではURL方式で判定します。' : '')};
+    const all = lines.join('\n');
+    let hint = 'キーをもう一度コピーし直して貼り付けてみてください。';
+    if(/401|UNAUTHENTICATED|ACCESS_TOKEN_TYPE/.test(all)) hint = 'キーが受け付けられていません。Google AI Studioで古いキーを削除し、新しく作り直したキーで試してください。';
+    else if(/API_KEY_INVALID|400/.test(all)) hint = 'キーが正しくないようです。前後に空白が入っていないか確認し、貼り付け直してください。';
+    else if(/404/.test(all)) hint = 'モデルが見つかりません。「使うモデル」を別のものに変えて試してください。';
+    else if(/止めました/.test(all)) hint = 'キーが拒否されたときや、広告ブロック(コンテンツブロッカー)が入っているときに起こります。Safariの設定でコンテンツブロッカーをオフにするか、キーを作り直して試してください。';
+    return {ok:false, text: all + '\n' + hint};
+  }
+  if(s.provider === 'claude'){
+    if(!s.claudeKey) return {ok:false, text:'APIキーを入力してください。'};
+    try{
+      const res = await fetch('https://api.anthropic.com/v1/models?limit=1', {headers:{'x-api-key':s.claudeKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true'}});
+      if(res.ok) return {ok:true, text:'接続できました'};
+      return {ok:false, text:`エラー ${await explain(res)}`};
+    }catch(e){ return {ok:false, text:`ブラウザが通信を止めました(${e.message || e.name})`}; }
+  }
+  return {ok:true, text:''};
+}
+
 async function callGemini({system, text, image, json, maxTokens}){
   const parts = [];
   if(image) parts.push({inline_data:{mime_type:'image/jpeg', data:image.split(',')[1]}});
@@ -611,14 +778,11 @@ async function callGemini({system, text, image, json, maxTokens}){
   };
   let res;
   try{
-    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(settings.geminiModel)}:generateContent`, {
-      method:'POST',
-      headers:{'content-type':'application/json', 'x-goog-api-key':settings.geminiKey},
-      body: JSON.stringify(body)
-    });
-  }catch{ throw new AIError('通信できませんでした。電波の状態を確認してください。' + QUOTA_TIP, 'network'); }
+    res = await geminiFetch(`models/${encodeURIComponent(settings.geminiModel)}:generateContent`, {method:'POST', body: JSON.stringify(body)});
+  }catch(e){ throw new AIError(`Geminiにつながりませんでした(${e.message || e.name})。APIキーが拒否されたときもこの表示になります。設定の「接続テスト」で原因を確認できます。` + QUOTA_TIP, 'network'); }
   if(!res.ok){
     let msg = '', status = ''; try{ const e = (await res.json()).error || {}; msg = e.message || ''; status = e.status || ''; }catch{}
+    if(res.status === 401) throw new AIError(`GeminiがこのAPIキーを受け付けませんでした(${status || 401})。Google AI Studioでキーを作り直してください。`, 'key');
     if(res.status === 429 || status === 'RESOURCE_EXHAUSTED') throw new AIError('Geminiの無料枠の回数制限に達しました。時間をおくと回復します。' + QUOTA_TIP, 'quota');
     if(res.status === 400 && /API key|API_KEY/i.test(msg)) throw new AIError('GeminiのAPIキーが正しくありません。設定で確認してください。', 'key');
     if(res.status === 403) throw new AIError('このAPIキーではGeminiを使えません。Google AI Studioでキーを確認してください。', 'key');
@@ -742,7 +906,7 @@ function openCopyAnalyze(draft, correction, error){
     <ol class="steps">
       <li><div><b>${isPhoto ? '写真と依頼文を送る準備をします' : '依頼文をコピーします'}</b>
         <div class="row">
-          ${canShareImg ? `<button class="btn btn-primary" id="cpShare">写真を共有</button>` : ''}
+          ${canShareImg ? `<button class="btn btn-primary btn-sm" id="cpShare">写真を共有</button>` : ''}
           <button class="btn ${canShareImg ? 'btn-ghost' : 'btn-primary'}" id="cpCopy">依頼文をコピー</button>
         </div>
         ${isPhoto && !canShareImg ? `<div class="hint">写真は<a href="${draft.image}" download="meal.jpg" style="color:var(--celadon-deep)">ここから保存</a>して添付してください。</div>` : ''}
@@ -751,8 +915,8 @@ function openCopyAnalyze(draft, correction, error){
       <li><div><b>返ってきた答えを全部コピーして、ここに貼り付け</b>
         <textarea class="input" id="cpPaste" placeholder='{"items":[ ... ]} のような答えをそのまま貼り付け' style="min-height:110px;font-size:14px;margin-bottom:var(--s2)"></textarea>
         <div class="row">
-          <button class="btn btn-secondary" id="cpFromClip">ペースト</button>
-          <button class="btn btn-primary" id="cpLoad">読み込む</button>
+          <button class="btn btn-secondary btn-sm" id="cpFromClip">ペースト</button>
+          <button class="btn btn-primary btn-sm" id="cpLoad">読み込む</button>
         </div>
       </div></li>
     </ol>
@@ -974,8 +1138,10 @@ function advicePrompt(){
   const wNow = lastWeightBefore(viewKey);
   const wAgo = wNow ? lastWeightBefore(dkey(addDays(fromKey(viewKey), -7))) : null;
   const wLine = wNow ? `\n体重: ${wNow.w.toFixed(1)}kg(${md(wNow.key)}時点)${wAgo ? `、1週間前 ${wAgo.w.toFixed(1)}kg` : ''}。体重の上下には触れすぎず、1週間以上の流れとして参考にする程度にする` : '';
-  return `日付: ${labelOf(viewKey)}${isToday ? `(今日・現在 ${nowTime()})` : '(過去の日の振り返り)'}${wLine}
-目標: ${t ? `${t.kcal}kcal / たんぱく質${t.protein}g / 脂質${t.fat}g / 炭水化物${t.carbs}g / 食物繊維${t.fiber}g / 塩分${t.salt}g未満(目的: ${settings.goal === 'lose' ? 'ゆるやかに減量' : '体重を維持'})` : '未設定(一般的な成人の目安で判断)'}
+  const exs = exList(viewKey);
+  const exLine = exs.length ? `\n運動: ${exs.map(e => `${e.name}${e.minutes ? e.minutes + '分' : ''}(約${e.kcal}kcal)`).join('、')}${settings.addExercise ? '。この分は目標に足して考える' : ''}` : '';
+  return `日付: ${labelOf(viewKey)}${exLine}${isToday ? `(今日・現在 ${nowTime()})` : '(過去の日の振り返り)'}${wLine}
+目標: ${t ? `${t.kcal + exAddToGoal(viewKey)}kcal / たんぱく質${t.protein}g / 脂質${t.fat}g / 炭水化物${t.carbs}g / 食物繊維${t.fiber}g / 塩分${t.salt}g未満(目的: ${settings.goal === 'lose' ? 'ゆるやかに減量' : '体重を維持'})` : '未設定(一般的な成人の目安で判断)'}
 合計: ${r0(s.kcal)}kcal / たんぱく質${r0(s.protein)}g / 脂質${r0(s.fat)}g / 炭水化物${r0(s.carbs)}g / 食物繊維${r1(s.fiber)}g / 塩分${r1(s.salt)}g
 食事:
 ${meals}`;
@@ -1008,13 +1174,13 @@ function openCopyAdvice(error){
     ${error ? `<div class="error">${esc(error)}</div>` : ''}
     <ol class="steps">
       <li><div><b>依頼文をコピーします</b>
-        <div class="row"><button class="btn btn-primary" id="caCopy">依頼文をコピー</button></div></div></li>
+        <div class="row"><button class="btn btn-primary btn-sm" id="caCopy">依頼文をコピー</button></div></div></li>
       <li><div><b>チャットアプリに貼り付けて送信</b><div class="hint">Claude・ChatGPT・Geminiなど、ふだん使っているアプリでOKです。</div></div></li>
       <li><div><b>返ってきた答えを貼り付け</b>
         <textarea class="input" id="caPaste" placeholder="アドバイスの文章をそのまま貼り付け" style="min-height:120px;font-size:14px;margin-bottom:var(--s2)"></textarea>
         <div class="row">
-          <button class="btn btn-secondary" id="caFromClip">ペースト</button>
-          <button class="btn btn-primary" id="caSave">保存する</button>
+          <button class="btn btn-secondary btn-sm" id="caFromClip">ペースト</button>
+          <button class="btn btn-primary btn-sm" id="caSave">保存する</button>
         </div></div></li>
     </ol>
   `);
@@ -1081,7 +1247,7 @@ function openHistory(){
     b.v = ks.length ? ks.reduce((a, k) => a + sums[k].kcal, 0) / ks.length : 0;
   });
   const avg = key => logged.length ? logged.reduce((a, k) => a + sums[k][key], 0) / logged.length : 0;
-  const near = t ? logged.filter(k => Math.abs(sums[k].kcal - t.kcal) <= t.kcal*0.1).length : 0;
+  const near = t ? logged.filter(k => { const g = t.kcal + exAddToGoal(k); return Math.abs(sums[k].kcal - g) <= g*0.1; }).length : 0;
 
   const first = allKeys[0], last = allKeys[allKeys.length-1];
   const periodLabel = histRange === 'year'
@@ -1157,14 +1323,22 @@ function openHistory(){
         ${wLabels}
       </svg></div>
       <div class="stats">
-        <div><div class="n-name">${histRange === 'week' || histRange === 'month' ? '最新' : '最後の平均'}</div><div><span class="num" style="font-size:24px">${lastP.w.toFixed(1)}</span><span class="unit">kg</span></div></div>
-        <div><div class="n-name">期間の変化</div><div><span class="num" style="font-size:24px">${change}</span></div></div>
-        <div><div class="n-name">測った日</div><div><span class="num" style="font-size:24px">${allKeys.filter(k => weightOf(k) !== null).length}</span><span class="unit">日</span></div></div>
+        <div><div class="n-name">${histRange === 'week' || histRange === 'month' ? '最新' : '最後の平均'}</div><div><span class="num stat">${lastP.w.toFixed(1)}</span><span class="unit">kg</span></div></div>
+        <div><div class="n-name">期間の変化</div><div><span class="num stat">${change}</span></div></div>
+        <div><div class="n-name">測った日</div><div><span class="num stat">${allKeys.filter(k => weightOf(k) !== null).length}</span><span class="unit">日</span></div></div>
       </div>
       ${histRange === 'quarter' || histRange === 'year' ? '<p class="hint">点は、それぞれの週・月に測った体重の平均です。</p>' : ''}`;
   }else{
     weightHtml = `<div class="empty">この期間の体重の記録はありません。ホーム画面の「体重」から記録できます。</div>`;
   }
+
+  const exDays = allKeys.filter(k => exList(k).length);
+  const exHtml = exDays.length ? `
+      <div class="stats">
+        <div><div class="n-name">運動した日</div><div><span class="num stat">${exDays.length}</span><span class="unit">日</span></div></div>
+        <div><div class="n-name">合計時間</div><div><span class="num stat">${exDays.reduce((a, k) => a + exMinutes(k), 0) >= 120 ? r1(exDays.reduce((a, k) => a + exMinutes(k), 0)/60) : exDays.reduce((a, k) => a + exMinutes(k), 0)}</span><span class="unit">${exDays.reduce((a, k) => a + exMinutes(k), 0) >= 120 ? '時間' : '分'}</span></div></div>
+        <div><div class="n-name">合計の消費</div><div><span class="num stat">${exDays.reduce((a, k) => a + exKcal(k), 0)}</span><span class="unit">kcal</span></div></div>
+      </div>` : `<div class="empty">この期間の運動の記録はありません。ホーム画面の「運動」から記録できます。</div>`;
 
   openSheet(`
     <div class="sheet-head"><h2>記録の推移</h2>${closeBtn}</div>
@@ -1183,12 +1357,14 @@ function openHistory(){
       <div class="week"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${RANGES[histRange].label}のカロリー推移">${goal}${bars}</svg></div>
       ${histRange === 'week' || histRange === 'month' ? '<div class="hint" style="text-align:center">棒をタップすると、その日の記録を開きます</div>' : ''}
       <div class="stats">
-        <div><div class="n-name">1日の平均</div><div><span class="num" style="font-size:24px">${r0(avg('kcal'))}</span><span class="unit">kcal</span></div></div>
-        <div><div class="n-name">記録した日</div><div><span class="num" style="font-size:24px">${logged.length}</span><span class="unit">/ ${allKeys.length}日</span></div></div>
-        ${t ? `<div><div class="n-name">目標の前後10%</div><div><span class="num" style="font-size:24px">${near}</span><span class="unit">日</span></div></div>` : ''}
+        <div><div class="n-name">1日の平均</div><div><span class="num stat">${r0(avg('kcal'))}</span><span class="unit">kcal</span></div></div>
+        <div><div class="n-name">記録した日</div><div><span class="num stat">${logged.length}</span><span class="unit">/ ${allKeys.length}日</span></div></div>
+        ${t ? `<div><div class="n-name">目標の前後10%</div><div><span class="num stat">${near}</span><span class="unit">日</span></div></div>` : ''}
       </div>
       <div class="group-title">体重</div>
       ${weightHtml}
+      <div class="group-title">運動</div>
+      ${exHtml}
       <div class="group-title">栄養の1日平均</div>
       <div class="nutri">${pfcRows}</div>
       <div class="sub-nutri">
@@ -1197,7 +1373,8 @@ function openHistory(){
       </div>
       <p class="hint" style="margin-top:var(--s5)">平均は記録した日だけで計算しています。1日ごとの増減より、長い期間の平均がゆるやかに目標に近づいていれば十分です。</p>
     ` : `<div class="empty" style="margin-top:var(--s3)">この期間の食事の記録はまだありません。</div>
-      <div class="group-title">体重</div>${weightHtml}`}
+      <div class="group-title">体重</div>${weightHtml}
+      <div class="group-title">運動</div>${exHtml}`}
   `);
 
   document.querySelectorAll('[data-range]').forEach(b => b.onclick = () => { histRange = b.dataset.range; histOffset = 0; openHistory(); });
@@ -1237,6 +1414,10 @@ function openSettings(welcome){
     <div class="field" id="paceField" ${s.goal === 'lose' ? '' : 'hidden'}><span class="lbl">ペース</span>
       <div class="seg" id="sPace"><button type="button" data-v="gentle" aria-pressed="${s.pace === 'gentle'}">ゆっくり(-250kcal/日)</button><button type="button" data-v="normal" aria-pressed="${s.pace === 'normal'}">ふつう(-500kcal/日)</button></div>
     </div>
+    <div class="field"><span class="lbl">運動の記録</span>
+      <div class="seg" id="sAddEx"><button type="button" data-v="1" aria-pressed="${!!s.addExercise}">目標に足す</button><button type="button" data-v="0" aria-pressed="${!s.addExercise}">足さない</button></div>
+      <div class="hint">運動で消費した分を、その日の目標カロリーに足すかどうかです。</div>
+    </div>
     <div class="note" id="targetPreview"></div>
     <button class="btn btn-primary btn-block" id="btnSaveSettings">保存する</button>
     ${welcome ? '' : `
@@ -1252,7 +1433,7 @@ function openSettings(welcome){
   const tmp = {...s};
   const readAI = () => {
     const k = $('#sKey'), m = $('#sModel');
-    if(k) tmp[tmp.provider + 'Key'] = k.value.trim();
+    if(k){ if(tmp.provider === 'gemini' && k.value.trim() !== tmp.geminiKey) tmp.geminiAuth = 'header'; tmp[tmp.provider + 'Key'] = k.value.trim(); }
     if(m) tmp[tmp.provider + 'Model'] = m.value;
   };
   const renderAI = () => {
@@ -1274,7 +1455,19 @@ function openSettings(welcome){
       <div class="field">
         <label for="sModel">使うモデル</label>
         <select class="input" id="sModel">${PROVIDERS[p].models.map(m => `<option value="${m.id}" ${tmp[p + 'Model'] === m.id ? 'selected' : ''}>${m.label}</option>`).join('')}</select>
+      </div>
+      <div class="field">
+        <button class="btn btn-secondary btn-sm" id="btnTest">接続テスト</button>
+        <div id="testResult"></div>
       </div>`;
+    $('#btnTest').onclick = async () => {
+      readAI();
+      const out = $('#testResult');
+      out.innerHTML = `<div class="hint">確認しています…</div>`;
+      const r = await testConnection(tmp);
+      if(r.mode) tmp.geminiAuth = r.mode;
+      out.innerHTML = `<div class="${r.ok ? 'note' : 'error'}" style="white-space:pre-wrap;margin:var(--s2) 0 0">${esc(r.text)}</div>`;
+    };
   };
   document.querySelectorAll('#sProv button').forEach(b => b.onclick = () => {
     readAI(); tmp.provider = b.dataset.v;
@@ -1295,7 +1488,7 @@ function openSettings(welcome){
       ? `1日の目標 <b>${t.kcal} kcal</b>(たんぱく質 ${t.protein}g / 脂質 ${t.fat}g / 炭水化物 ${t.carbs}g)<br><span style="font-size:12px">基礎代謝 約${t.bmr} kcal・消費の目安 約${t.tdee} kcal。目標は基礎代謝や安全な下限を下回らないように調整しています。</span>`
       : '年齢・身長・体重を入れると、1日の目標が計算されます。';
   };
-  bindSeg('sSex', 'sex'); bindSeg('sGoal', 'goal', () => { $('#paceField').hidden = tmp.goal !== 'lose'; }); bindSeg('sPace', 'pace');
+  bindSeg('sSex', 'sex'); document.querySelectorAll('#sAddEx button').forEach(b => b.onclick = () => { tmp.addExercise = b.dataset.v === '1'; document.querySelectorAll('#sAddEx button').forEach(x => x.setAttribute('aria-pressed', x === b)); }); bindSeg('sGoal', 'goal', () => { $('#paceField').hidden = tmp.goal !== 'lose'; }); bindSeg('sPace', 'pace');
   ['sAge','sHeight','sWeight','sAct'].forEach(id => $('#'+id).addEventListener('input', preview));
   preview();
 
@@ -1336,6 +1529,7 @@ $('#importInput').onchange = async e => {
       for(const m of v.meals || []){ const i = d.meals.findIndex(x => x.id === m.id); if(i >= 0) d.meals[i] = m; else d.meals.push(m); }
       if(v.advice && !d.advice) d.advice = v.advice;
       if(typeof v.weight === 'number') d.weight = v.weight;
+      for(const e of v.exercise || []){ d.exercise = d.exercise || []; const i = d.exercise.findIndex(x => x.id === e.id); if(i >= 0) d.exercise[i] = e; else d.exercise.push(e); }
     }
     saveData(); closeSheet(); render(); toast('バックアップから戻しました');
   }catch{ toast('このファイルは読み込めませんでした'); }
