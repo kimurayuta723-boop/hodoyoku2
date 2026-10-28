@@ -121,6 +121,25 @@ button.chip{min-height:28px}
 .choices button[aria-pressed="true"],.quick button[aria-pressed="true"]{background:var(--celadon-deep);border-color:var(--celadon-deep);color:var(--on-accent);font-weight:700}
 .quick{display:flex;gap:6px;flex:1}
 .quick button{flex:1;min-width:0}
+.lbl-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--s1)}
+.lbl-row .lbl{font-size:13px;color:var(--muted)}
+.lbl-row .btn-text{min-height:32px;padding:0 var(--s1)}
+.usual-list{background:var(--plate);border-radius:var(--r-surface);box-shadow:var(--shadow);overflow:hidden}
+.usual-row{display:flex;align-items:center;border-bottom:1px solid var(--line)}
+.usual-row:last-child{border-bottom:0}
+.usual-pick{flex:1;min-width:0;display:flex;align-items:center;gap:var(--s3);border:0;background:transparent;text-align:left;padding:10px var(--s3);min-height:48px}
+.usual-pick:active{background:var(--celadon-pale)}
+.usual-mark{flex:none;min-width:2.6em;font-size:11px;color:var(--celadon-deep);background:var(--celadon-pale);border-radius:var(--r-pill);padding:1px 6px;text-align:center}
+.usual-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.usual-kcal{flex:none;font-size:15px;white-space:nowrap}
+.usual-row .btn-text{flex:none;min-height:40px;font-size:13px}
+.fav-toggle{display:block;margin:-12px 0 var(--s5) var(--s1);border:0;background:none;color:var(--celadon-deep);font-size:14px;font-weight:500;padding:6px 0}
+.fav-toggle[aria-pressed="true"]{color:var(--celadon-deep);font-weight:700}
+.reflect{margin-top:var(--s4)}
+.reflect h3{margin:0 0 var(--s1);font-family:var(--serif);font-size:15px;letter-spacing:.04em}
+.reflect .text{white-space:pre-wrap;font-size:14px}
+.reflect .meta{font-size:11px;color:var(--muted);margin-top:var(--s2)}
+.reflect .actions{display:flex;flex-direction:column;align-items:stretch;margin-top:var(--s3)}
 .ex-list{background:var(--plate);border-radius:var(--r-surface);padding:var(--s1) var(--s3);margin-bottom:var(--s4);box-shadow:var(--shadow)}
 .ex-row{display:flex;justify-content:space-between;align-items:center;gap:var(--s2);padding:var(--s2) 0;border-bottom:1px solid var(--line)}
 .ex-row .meta{font-size:12px;color:var(--muted)}
@@ -591,7 +610,7 @@ const EXERCISES = [
   {id:'run',    name:'ランニング',     mets:9.0},
   {id:'bike',   name:'自転車',         mets:6.8},
   {id:'gym',    name:'筋トレ',         mets:5.0},
-  {id:'yoga',   name:'ヨガ・ストレッチ', mets:2.5},
+  {id:'yoga',   name:'ヨガ', mets:2.5},
   {id:'swim',   name:'水泳',           mets:6.0},
   {id:'other',  name:'その他',         mets:null}
 ];
@@ -1030,6 +1049,11 @@ function openEntry(draft, error){
     <div class="sheet-head"><h2>${isPhoto ? '写真で記録' : '文字で記録'}</h2>${closeBtn}</div>
     ${error ? `<div class="error">${esc(error)}</div>` : ''}
     ${isPhoto ? `<img class="photo-preview" src="${draft.image}" alt="記録する食事の写真">` : ''}
+    ${!isPhoto && usualEntries(1).length ? `
+      <div class="field">
+        <div class="lbl-row"><span class="lbl">いつもの</span><button type="button" class="btn btn-text btn-sm" id="usualAll">すべて見る</button></div>
+        <div class="usual-list">${usualEntries(3).map(e => usualRow(e)).join('')}</div>
+      </div>` : ''}
     <div class="field">
       <label for="entryText">${isPhoto ? '補足(なくても大丈夫)' : '食べたもの'}</label>
       <textarea class="input" id="entryText" placeholder="${isPhoto ? '例: ご飯は半分残した/ドレッシングなし' : '例: 牛丼並盛りと味噌汁、サラダ\n例: コンビニのツナマヨおにぎり2個とからあげクン'}">${esc(draft.text)}</textarea>
@@ -1044,6 +1068,10 @@ function openEntry(draft, error){
          <div class="hint" style="text-align:center;margin-top:8px">設定でGeminiのAPIキーを入れると、このボタンひとつで判定できます。</div>`}
   `);
   bindTypeSeg(draft);
+  if(!isPhoto && $('#usualAll')){
+    bindUsual(draft, usualEntries(3));
+    $('#usualAll').onclick = () => { draft.text = $('#entryText').value.trim(); draft.time = $('#entryTime').value || draft.time; openUsual(draft); };
+  }
   const collect = () => {
     draft.text = $('#entryText').value.trim();
     draft.time = $('#entryTime').value || draft.time;
@@ -1107,6 +1135,7 @@ function openReview(draft, error){
     ${itemsHtml}
     <div class="total"><span>合計</span><span><span class="num">${r0(s.kcal)}</span><span class="unit">kcal</span></span></div>
     <div class="total-sub">たんぱく質 ${r0(s.protein)}g / 脂質 ${r0(s.fat)}g / 炭水化物 ${r0(s.carbs)}g。量が違うときは倍率をタップ</div>
+    ${draft.items.length ? `<button type="button" class="fav-toggle" id="btnFav" aria-pressed="${isFavorite(draft.items)}">${isFavorite(draft.items) ? '★ いつものに登録済み' : '☆ いつものに登録'}</button>` : ''}
     <div class="field">
       <label for="fixText">違うところを伝えて再判定</label>
       <div class="row"><input class="input" id="fixText" placeholder="例: 唐揚げは3個、味噌汁はなし" style="flex:3"><button class="btn btn-secondary" id="btnFix" style="flex:1;padding:0 var(--s3)">再判定</button></div>
@@ -1118,6 +1147,7 @@ function openReview(draft, error){
   `);
   bindTypeSeg(draft);
   const keepTime = () => { draft.time = $('#revTime').value || draft.time; };
+  if($('#btnFav')) $('#btnFav').onclick = () => { keepTime(); toggleFavorite(draft.items); openReviewKeepScroll(draft); };
 
   document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
     keepTime(); draft.items[+b.dataset.i].mult = +b.dataset.m; openReviewKeepScroll(draft);
@@ -1229,28 +1259,187 @@ async function getAdvice(){
 
 function openCopyAdvice(error){
   const d = data.days[viewKey]; if(!d?.meals?.length) return;
-  const prompt = `${ADVICE_SYSTEM}\n\n---\n${advicePrompt()}`;
+  openCopyText({title:'チャットアプリでアドバイス', prompt:`${ADVICE_SYSTEM}\n\n---\n${advicePrompt()}`, placeholder:'アドバイスの文章をそのまま貼り付け', error,
+    onSave: t => { saveAdvice(t); closeSheet(); toast('アドバイスを保存しました'); }});
+}
+
+/* ---------- いつもの(お気に入り・よく食べるもの) ---------- */
+const mealSig = items => items.map(i => `${i.name}×${i.mult ?? 1}`).sort().join('|');
+const mealLabel = items => items.map(i => i.name + ((i.mult ?? 1) !== 1 ? `(×${i.mult})` : '')).join('、');
+const copyItems = items => JSON.parse(JSON.stringify(items));
+if(!Array.isArray(data.favorites)) data.favorites = [];
+
+// 過去90日の記録から、よく食べる組み合わせを数える(お気に入りに入っているものは除く)
+function frequentMeals(limit = 15){
+  const since = dkey(addDays(new Date(), -90));
+  const favSigs = new Set(data.favorites.map(f => mealSig(f.items)));
+  const map = new Map();
+  Object.keys(data.days).filter(k => k >= since).sort().forEach(k => {
+    (data.days[k].meals || []).forEach(m => {
+      if(!m.items?.length) return;
+      const sig = mealSig(m.items);
+      if(favSigs.has(sig)) return;
+      const e = map.get(sig) || {count:0};
+      e.count++; e.last = `${k} ${m.time || ''}`; e.items = m.items; e.type = m.type;
+      map.set(sig, e);
+    });
+  });
+  return [...map.values()].sort((a, b) => b.count - a.count || b.last.localeCompare(a.last)).slice(0, limit);
+}
+function usualEntries(limit){
+  const favs = data.favorites.map(f => ({fav:true, id:f.id, items:f.items}));
+  const freq = frequentMeals().map((f, i) => ({fav:false, id:'f' + i, items:f.items, count:f.count}));
+  const all = [...favs, ...freq];
+  return limit ? all.slice(0, limit) : all;
+}
+function usualRow(e, withDelete){
+  const kcal = r0(sumItems(e.items).kcal);
+  return `<div class="usual-row">
+    <button type="button" class="usual-pick" data-usual="${e.id}">
+      <span class="usual-mark">${e.fav ? '★' : e.count > 1 ? `${e.count}回` : '最近'}</span>
+      <span class="usual-name">${esc(mealLabel(e.items))}</span>
+      <span class="usual-kcal"><span class="num">${kcal}</span><span class="unit">kcal</span></span>
+    </button>
+    ${withDelete && e.fav ? `<button type="button" class="btn btn-text danger" data-unfav="${e.id}" aria-label="いつものから外す">外す</button>` : ''}
+  </div>`;
+}
+function bindUsual(draft, entries){
+  document.querySelectorAll('[data-usual]').forEach(b => b.onclick = () => {
+    const e = entries.find(x => x.id === b.dataset.usual); if(!e) return;
+    const t = document.querySelector('#entryTime'); if(t) draft.time = t.value || draft.time;
+    Object.assign(draft, {source:'usual', items: copyItems(e.items), text: mealLabel(e.items), note:'', confidence:'', image:'', thumb:''});
+    openReview(draft);
+  });
+}
+function openUsual(draft){
+  const entries = usualEntries();
+  const favs = entries.filter(e => e.fav), freq = entries.filter(e => !e.fav);
   openSheet(`
-    <div class="sheet-head"><h2>チャットアプリでアドバイス</h2>${closeBtn}</div>
+    <div class="sheet-head"><h2>いつもの</h2>${closeBtn}</div>
+    <div class="group-title first">お気に入り</div>
+    ${favs.length ? `<div class="usual-list">${favs.map(e => usualRow(e, true)).join('')}</div>`
+      : `<div class="empty">記録の確認画面で「★ いつものに登録」を押すと、ここに並びます。</div>`}
+    <div class="group-title">よく食べるもの</div>
+    ${freq.length ? `<div class="usual-list">${freq.map(e => usualRow(e)).join('')}</div><p class="hint">過去90日の記録から、食べた回数の多い順に並べています。</p>`
+      : `<div class="empty">記録がたまると、よく食べる組み合わせがここに出てきます。</div>`}
+    <button class="btn btn-secondary btn-block" id="usualBack" style="margin-top:var(--s4)">戻る</button>
+  `);
+  bindUsual(draft, entries);
+  document.querySelectorAll('[data-unfav]').forEach(b => b.onclick = () => {
+    data.favorites = data.favorites.filter(f => f.id !== b.dataset.unfav);
+    saveData(); openUsual(draft); toast('いつものから外しました');
+  });
+  $('#usualBack').onclick = () => openEntry(draft);
+}
+function toggleFavorite(items){
+  const sig = mealSig(items);
+  const i = data.favorites.findIndex(f => mealSig(f.items) === sig);
+  if(i >= 0){ data.favorites.splice(i, 1); saveData(); toast('いつものから外しました'); return false; }
+  data.favorites.unshift({id: uid(), items: copyItems(items)});
+  saveData(); toast('いつものに登録しました'); return true;
+}
+const isFavorite = items => items.length && data.favorites.some(f => mealSig(f.items) === mealSig(items));
+
+/* ---------- コピペ方式(文章の答え用・共通) ---------- */
+function openCopyText({title, prompt, placeholder, onSave, back, error}){
+  openSheet(`
+    <div class="sheet-head"><h2>${esc(title)}</h2>${closeBtn}</div>
     ${error ? `<div class="error">${esc(error)}</div>` : ''}
     <ol class="steps">
       <li><div><b>依頼文をコピーします</b>
-        <div class="row"><button class="btn btn-primary btn-sm" id="caCopy">依頼文をコピー</button></div></div></li>
+        <div class="row"><button class="btn btn-primary btn-sm" id="ctCopy">依頼文をコピー</button></div></div></li>
       <li><div><b>チャットアプリに貼り付けて送信</b><div class="hint">Claude・ChatGPT・Geminiなど、ふだん使っているアプリでOKです。</div></div></li>
       <li><div><b>返ってきた答えを貼り付け</b>
-        <textarea class="input" id="caPaste" placeholder="アドバイスの文章をそのまま貼り付け" style="min-height:120px;font-size:14px;margin-bottom:var(--s2)"></textarea>
+        <textarea class="input" id="ctPaste" placeholder="${esc(placeholder)}" style="min-height:120px;font-size:14px;margin-bottom:var(--s2)"></textarea>
         <div class="row">
-          <button class="btn btn-secondary btn-sm" id="caFromClip">ペースト</button>
-          <button class="btn btn-primary btn-sm" id="caSave">保存する</button>
+          <button class="btn btn-secondary btn-sm" id="ctFromClip">ペースト</button>
+          <button class="btn btn-primary btn-sm" id="ctSave">保存する</button>
         </div></div></li>
     </ol>
+    ${back ? `<button class="btn btn-text btn-block" id="ctBack">戻る</button>` : ''}
   `);
-  $('#caCopy').onclick = async () => toast(await copyText(prompt) ? '依頼文をコピーしました' : 'コピーできませんでした');
-  $('#caFromClip').onclick = () => readClipboardInto('#caPaste');
-  $('#caSave').onclick = () => {
-    const t = $('#caPaste').value.trim();
-    if(!t){ $('#caPaste').focus(); return; }
-    saveAdvice(t); closeSheet(); toast('アドバイスを保存しました');
+  $('#ctCopy').onclick = async () => toast(await copyText(prompt) ? '依頼文をコピーしました' : 'コピーできませんでした');
+  $('#ctFromClip').onclick = () => readClipboardInto('#ctPaste');
+  $('#ctSave').onclick = () => {
+    const t = $('#ctPaste').value.trim();
+    if(!t){ $('#ctPaste').focus(); return; }
+    onSave(t);
+  };
+  if(back) $('#ctBack').onclick = back;
+}
+
+/* ---------- 振り返り(1週間・1か月) ---------- */
+const REFLECT_SYSTEM = `あなたは、前向きで現実的な管理栄養士です。ユーザーの1週間(または1か月)の食事・運動・体重の記録から、期間の振り返りと次の期間の過ごし方を提案します。
+ルール:
+- 日本語で、全体で300字前後。見出しや太字などの装飾は使わない
+- 最初に、できていたことを具体的に1〜2文で伝える(記録を続けたこと自体も評価してよい)
+- 次に、数字から見える傾向を1〜2文(曜日や食事の時間帯の偏り、たんぱく質・塩分・食物繊維など)
+- 最後に「・」で始まる、来週すぐ実行できる具体的な提案を2〜3個。コンビニや外食、家にありそうな食材で実行できるものにする
+- 食べすぎた日を責めたり罪悪感をあおったりしない。食事を抜く、極端に減らす、目標を大きく下回ることはすすめない。記録が目標より大幅に少ない日が多ければ、しっかり食べるよう伝える
+- 体重は日々の上下に触れず、期間全体の流れとして扱う。体重の数字だけを目標にさせない
+- 記録のない日は「記録なし」として扱い、食べていないとは決めつけない
+- 病気の診断や治療に関わる判断はしない`;
+
+const reflectKey = (range, firstKey) => `${range}:${firstKey}`;
+if(!data.reflections || typeof data.reflections !== 'object') data.reflections = {};
+
+function reflectPrompt(keys){
+  const t = targets();
+  const lines = keys.map(k => {
+    const d = data.days[k] || {};
+    const has = d.meals?.length, ex = exList(k), w = weightOf(k);
+    const s = has ? sumDay(k) : null;
+    const parts = [s ? `${r0(s.kcal)}kcal たんぱく質${r0(s.protein)}g 脂質${r0(s.fat)}g 炭水化物${r0(s.carbs)}g 食物繊維${r1(s.fiber)}g 塩分${r1(s.salt)}g(${d.meals.map(m => m.type).join('・')})` : '食事の記録なし'];
+    if(ex.length) parts.push('運動 ' + ex.map(e => `${e.name}${e.minutes ? e.minutes + '分' : ''}(約${e.kcal}kcal)`).join('、'));
+    if(w !== null) parts.push(`体重 ${w.toFixed(1)}kg`);
+    return `${md(k)}(${WD[fromKey(k).getDay()]}): ${parts.join(' / ')}`;
+  }).join('\n');
+  const logged = keys.filter(k => data.days[k]?.meals?.length);
+  const avg = logged.length ? r0(logged.reduce((a, k) => a + sumDay(k).kcal, 0) / logged.length) : 0;
+  return `期間: ${labelOf(keys[0])}〜${labelOf(keys[keys.length-1])}(${keys.length}日間、食事を記録した日 ${logged.length}日)
+目標: ${t ? `1日 ${t.kcal}kcal / たんぱく質${t.protein}g / 脂質${t.fat}g / 炭水化物${t.carbs}g / 食物繊維${t.fiber}g / 塩分${t.salt}g未満(目的: ${settings.goal === 'lose' ? 'ゆるやかに減量' : '体重を維持'})${settings.addExercise ? '。運動した日は、その消費分を目標に足して考える' : ''}` : '未設定(一般的な成人の目安で判断)'}
+記録した日の平均: ${avg}kcal
+日ごとの記録:
+${lines}`;
+}
+
+function reflectionHtml(range, keys){
+  if(range !== 'week' && range !== 'month') return '';
+  const key = reflectKey(range, keys[0]);
+  const r = data.reflections[key];
+  const hasAny = keys.some(k => data.days[k]?.meals?.length);
+  const label = range === 'week' ? 'この1週間' : 'この1か月';
+  let body;
+  if(r) body = `<div class="text">${esc(r.text)}</div><div class="meta">${esc(r.at)} 時点の記録をもとに</div>`;
+  else body = `<div class="text" style="color:var(--muted);font-size:14px">${hasAny ? `${label}の食事・運動・体重をまとめて、できていたことと次の過ごし方を提案します。` : 'この期間の記録がたまると、振り返りができます。'}</div>`;
+  return `<section class="panel reflect" id="reflectBox">
+    <h3>${label}の振り返り</h3>${body}
+    <div class="actions">
+      <button class="btn btn-secondary" id="btnReflect" ${hasAny ? '' : 'disabled'}>${r ? 'いまの記録で振り返り直す' : '振り返る'}</button>
+      ${hasAny && useAI() ? `<button class="btn btn-text" id="btnReflectCopy">チャットアプリで振り返る(コピペ)</button>` : ''}
+    </div>
+  </section>`;
+}
+function bindReflection(range, keys){
+  if(!$('#btnReflect')) return;
+  const key = reflectKey(range, keys[0]);
+  const save = text => { data.reflections[key] = {text: text.trim(), at: `${labelOf(dkey(new Date()))} ${nowTime()}`}; saveData(); };
+  const copyFlow = error => openCopyText({
+    title:'チャットアプリで振り返り', prompt:`${REFLECT_SYSTEM}\n\n---\n${reflectPrompt(keys)}`, placeholder:'振り返りの文章をそのまま貼り付け', error,
+    onSave: t => { save(t); openHistory(); toast('振り返りを保存しました'); }, back: () => openHistory()
+  });
+  if($('#btnReflectCopy')) $('#btnReflectCopy').onclick = () => copyFlow();
+  $('#btnReflect').onclick = async () => {
+    if(!useAI()){ copyFlow(); return; }
+    const box = $('#reflectBox');
+    box.innerHTML = `<h3>振り返り</h3><div class="loading" style="padding:var(--s4) 0"><div class="spin"></div><div>記録を読んでいます…</div></div>`;
+    try{
+      save(await callAI({system:REFLECT_SYSTEM, text:reflectPrompt(keys), maxTokens:1200}));
+      openHistory();
+    }catch(err){
+      if(['quota','network','busy','timeout'].includes(err.kind)){ copyFlow(err.message); return; }
+      openHistory(); $('#reflectBox')?.insertAdjacentHTML('beforeend', `<div class="error" style="margin:var(--s3) 0 0">${esc(err.message)}</div>`);
+    }
   };
 }
 
@@ -1409,6 +1598,7 @@ function openHistory(){
       <div><div class="period-label">${periodLabel}</div><div class="hint" style="margin:0">${unitNote}</div></div>
       <button class="icon-btn" id="histNext" aria-label="次の期間" ${histOffset === 0 ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
+    ${reflectionHtml(histRange, allKeys)}
     <div class="group-title first" style="margin-top:var(--s4)">カロリー</div>
     ${logged.length ? `
       <div class="legend">
@@ -1438,6 +1628,7 @@ function openHistory(){
       <div class="group-title">運動</div>${exHtml}`}
   `);
 
+  bindReflection(histRange, allKeys);
   document.querySelectorAll('[data-range]').forEach(b => b.onclick = () => { histRange = b.dataset.range; histOffset = 0; openHistory(); });
   $('#histPrev').onclick = () => { histOffset++; openHistory(); };
   $('#histNext').onclick = () => { if(histOffset > 0){ histOffset--; openHistory(); } };
@@ -1563,7 +1754,7 @@ function openSettings(welcome){
     $('#btnImport').onclick = () => { $('#importInput').value = ''; $('#importInput').click(); };
     $('#btnWipe').onclick = () => {
       if(!confirm('すべての食事記録とアドバイスを削除します。元に戻せません。よろしいですか?')) return;
-      data = {days:{}}; saveData(); closeSheet(); render(); toast('すべての記録を削除しました');
+      data = {days:{}, favorites:[], reflections:{}}; saveData(); closeSheet(); render(); toast('すべての記録を削除しました');
     };
   }
 }
@@ -1592,6 +1783,8 @@ $('#importInput').onchange = async e => {
       if(typeof v.weight === 'number') d.weight = v.weight;
       for(const e of v.exercise || []){ d.exercise = d.exercise || []; const i = d.exercise.findIndex(x => x.id === e.id); if(i >= 0) d.exercise[i] = e; else d.exercise.push(e); }
     }
+    for(const f of incoming.favorites || []) if(!data.favorites.some(x => mealSig(x.items) === mealSig(f.items))) data.favorites.push(f);
+    for(const [k, v] of Object.entries(incoming.reflections || {})) if(!data.reflections[k]) data.reflections[k] = v;
     saveData(); closeSheet(); render(); toast('バックアップから戻しました');
   }catch{ toast('このファイルは読み込めませんでした'); }
 };

@@ -1,5 +1,5 @@
 // ほどよく service worker: アプリ本体をキャッシュしてオフラインでも開けるようにする
-const CACHE = 'hodoyoku-v8';
+const CACHE = 'hodoyoku-v10';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
