@@ -311,8 +311,8 @@ img,svg{max-width:100%}
 
 const PROVIDERS = {
   gemini: {label:'Gemini(無料枠)', short:'Gemini', models:[
-    {id:'gemini-3.8-flash',      label:'Gemini 3.8 Flash(おすすめ)'},
-    {id:'gemini-3.5-flash-lite', label:'Gemini 3.5 Flash-Lite(軽い・速い)'}
+    {id:'gemini-3.5-flash-lite', label:'Gemini 3.5 Flash-Lite(おすすめ・速い)'},
+    {id:'gemini-3.8-flash',      label:'Gemini 3.8 Flash(高精度・時間がかかることも)'}
   ]},
   claude: {label:'Claude(有料)', short:'Claude', models:[
     {id:'claude-sonnet-5-5', label:'Sonnet(おすすめ・バランス型)'},
@@ -340,7 +340,7 @@ function save(key, val){
 }
 let settings = Object.assign({
   provider:'gemini', geminiAuth:'header', addExercise:true,
-  geminiKey:'', geminiModel:'gemini-3.8-flash',
+  geminiKey:'', geminiModel:'gemini-3.5-flash-lite',
   claudeKey:'', claudeModel:'claude-sonnet-5-5',
   sex:'female', age:'', height:'', weight:'', activity:1.375,
   goal:'lose', pace:'gentle'
@@ -348,6 +348,8 @@ let settings = Object.assign({
 // 旧バージョン(Claudeのみ)の設定を引き継ぐ
 if(settings.apiKey && !settings.claudeKey){ settings.claudeKey = settings.apiKey; settings.claudeModel = settings.model || settings.claudeModel; settings.provider = 'claude'; }
 delete settings.apiKey; delete settings.model;
+// 3.8 Flashが既定だった版からの移行: 応答が遅いため、標準をFlash-Liteに切り替える
+if(!settings.modelV2){ if(settings.geminiModel === 'gemini-3.8-flash') settings.geminiModel = 'gemini-3.5-flash-lite'; settings.modelV2 = true; try{ localStorage.getItem(SET_KEY) && localStorage.setItem(SET_KEY, JSON.stringify(settings)); }catch{} }
 const hasKey = s => (s.provider === 'gemini' && s.geminiKey) || (s.provider === 'claude' && s.claudeKey);
 const useAI = () => settings.provider !== 'copy' && hasKey(settings);
 let data = load(DATA_KEY, {days:{}});
@@ -685,6 +687,7 @@ function openExerciseKeep(state){ const y = $('#sheet').scrollTop; openExercise(
 /* ---------- sheet ---------- */
 let sheetCloseHook = null;
 function openSheet(html){
+  stopLoading();
   $('#sheetBody').innerHTML = html;
   $('#overlay').classList.add('open');
   $('#sheet').classList.add('open');
@@ -734,11 +737,18 @@ async function callAI({system, text, image, json = false, maxTokens = 1500}){
 
 // 認証はヘッダー(x-goog-api-key)が基本。接続テストでヘッダーが通らずURL方式なら通ったときは、URL方式を使う
 function geminiFetch(path, opts = {}){
+  const {timeout = 50000, ...rest} = opts; opts = rest;
   const useQuery = settings.geminiAuth === 'query';
   const url = `https://generativelanguage.googleapis.com/v1beta/${path}${useQuery ? (path.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(settings.geminiKey) : ''}`;
   const headers = {...(opts.body ? {'content-type':'application/json'} : {}), ...(useQuery ? {} : {'x-goog-api-key':settings.geminiKey})};
-  return fetch(url, {...opts, headers});
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), timeout);
+  return fetch(url, {...opts, headers, signal: ctl.signal})
+    .catch(e => { if(e.name === 'AbortError'){ const t = new Error(`${Math.round(timeout/1000)}秒待っても返事がありませんでした`); t.name = 'TimeoutError'; throw t; } throw e; })
+    .finally(() => clearTimeout(timer));
 }
+// 考える量を抑えて速く返してもらう(3.8 Flashは既定が中程度で遅くなりやすい)
+const geminiThinking = model => settings.noThinkingCfg ? {} : {thinkingConfig:{thinkingLevel: /lite/.test(model) ? 'minimal' : 'low'}};
 
 async function testConnection(s){
   const lines = [];
@@ -749,8 +759,10 @@ async function testConnection(s){
     for(const mode of ['header', 'query']){
       settings = {...s, geminiAuth: mode};
       try{
-        const res = await geminiFetch(`models/${encodeURIComponent(s.geminiModel)}`);
-        if(res.ok){ lines.push(`${mode === 'header' ? 'ヘッダー方式' : 'URL方式'}: 接続できました`); ok = mode; break; }
+        const t0 = performance.now();
+        const res = await geminiFetch(`models/${encodeURIComponent(s.geminiModel)}`, {timeout: 20000});
+        const sec = ((performance.now() - t0)/1000).toFixed(1);
+        if(res.ok){ lines.push(`${mode === 'header' ? 'ヘッダー方式' : 'URL方式'}: 接続できました(${sec}秒)`); ok = mode; break; }
         lines.push(`${mode === 'header' ? 'ヘッダー方式' : 'URL方式'}: エラー ${await explain(res)}`);
       }catch(e){ lines.push(`${mode === 'header' ? 'ヘッダー方式' : 'URL方式'}: ブラウザが通信を止めました(${e.message || e.name})`); }
     }
@@ -760,10 +772,15 @@ async function testConnection(s){
       settings = {...s, geminiAuth: ok};
       let genOk = false;
       try{
-        const res = await geminiFetch(`models/${encodeURIComponent(s.geminiModel)}:generateContent`, {method:'POST', body: JSON.stringify({
-          contents:[{role:'user', parts:[{text:'「OK」とだけ返してください。'}]}], generationConfig:{maxOutputTokens:1024}
+        const t0 = performance.now();
+        const res = await geminiFetch(`models/${encodeURIComponent(s.geminiModel)}:generateContent`, {method:'POST', timeout: 45000, body: JSON.stringify({
+          contents:[{role:'user', parts:[{text:'「OK」とだけ返してください。'}]}], generationConfig:{maxOutputTokens:1024, ...geminiThinking(s.geminiModel)}
         })});
-        if(res.ok){ lines.push('判定テスト: 成功しました'); genOk = true; }
+        const sec = (performance.now() - t0)/1000;
+        if(res.ok){
+          lines.push(`判定テスト: 成功しました(${sec.toFixed(1)}秒)`); genOk = true;
+          if(sec > 20) lines.push('返事にかなり時間がかかっています。「使うモデル」をFlash-Liteにすると速くなることがあります。');
+        }
         else{
           const ex = await explain(res);
           lines.push(`判定テスト: エラー ${ex}`);
@@ -771,7 +788,7 @@ async function testConnection(s){
           else if(/404/.test(ex)) lines.push('このモデルは使えないようです。「使うモデル」を変えて試してください。');
           else if(/403|PERMISSION/.test(ex)) lines.push('このキーでは判定が許可されていません。AI Studioでキーを作り直してください。');
         }
-      }catch(e){ lines.push(`判定テスト: ブラウザが通信を止めました(${e.message || e.name})`); }
+      }catch(e){ lines.push(e.name === 'TimeoutError' ? `判定テスト: ${e.message}。混み合っているか、モデルの処理が重いようです。「使うモデル」をFlash-Liteにして試してください。` : `判定テスト: ブラウザが通信を止めました(${e.message || e.name})`); }
       settings = keep;
       return {ok:genOk, mode:ok, text: lines.join('\n') + (genOk && ok === 'query' ? '\nこの端末ではURL方式で判定します。' : '')};
     }
@@ -801,14 +818,22 @@ async function callGemini({system, text, image, json, maxTokens}){
   const body = {
     system_instruction:{parts:[{text:system}]},
     contents:[{role:'user', parts}],
-    generationConfig:{maxOutputTokens: Math.max(4096, maxTokens*3), ...(json ? {responseMimeType:'application/json'} : {})}
+    generationConfig:{maxOutputTokens: Math.max(4096, maxTokens*3), ...(json ? {responseMimeType:'application/json'} : {}), ...geminiThinking(settings.geminiModel)}
   };
   let res;
-  try{
-    res = await geminiFetch(`models/${encodeURIComponent(settings.geminiModel)}:generateContent`, {method:'POST', body: JSON.stringify(body)});
-  }catch(e){ throw new AIError(`Geminiにつながりませんでした(${e.message || e.name})。APIキーが拒否されたときもこの表示になります。設定の「接続テスト」で原因を確認できます。` + QUOTA_TIP, 'network'); }
+  const send = () => geminiFetch(`models/${encodeURIComponent(settings.geminiModel)}:generateContent`, {method:'POST', body: JSON.stringify(body)});
+  try{ res = await send(); }
+  catch(e){
+    if(e.name === 'TimeoutError') throw new AIError(`Geminiの返事が遅く、${e.message}。` + QUOTA_TIP, 'timeout');
+    throw new AIError(`Geminiにつながりませんでした(${e.message || e.name})。設定の「接続テスト」で原因を確認できます。` + QUOTA_TIP, 'network');
+  }
   if(!res.ok){
-    let msg = '', status = ''; try{ const e = (await res.json()).error || {}; msg = e.message || ''; status = e.status || ''; }catch{}
+    let msg = '', status = ''; try{ const e = (await res.clone().json()).error || {}; msg = e.message || ''; status = e.status || ''; }catch{}
+    // 考える量の指定に対応していないモデルなら、指定を外してもう一度
+    if(res.status === 400 && /thinking/i.test(msg) && body.generationConfig.thinkingConfig){
+      settings.noThinkingCfg = true; saveSettings();
+      return callGemini({system, text, image, json, maxTokens});
+    }
     if(res.status === 401) throw new AIError(`GeminiがこのAPIキーを受け付けませんでした(${status || 401})。Google AI Studioでキーを作り直してください。`, 'key');
     if(res.status === 429 || status === 'RESOURCE_EXHAUSTED') throw new AIError('Geminiの無料枠の回数制限に達しました。時間をおくと回復します。' + QUOTA_TIP, 'quota');
     if(res.status === 400 && /API key|API_KEY/i.test(msg)) throw new AIError('GeminiのAPIキーが正しくありません。設定で確認してください。', 'key');
@@ -1034,14 +1059,23 @@ function openEntry(draft, error){
       openReview(draft);
     }catch(err){
       // 回数制限・通信エラーのときはそのままコピペ方式へ
-      if(['quota','network','busy'].includes(err.kind)) openCopyAnalyze(draft, '', err.message);
+      if(['quota','network','busy','timeout'].includes(err.kind)) openCopyAnalyze(draft, '', err.message);
       else openEntry(draft, err.message);
     }
   };
 }
 
+let loadingTimer = null;
+function stopLoading(){ if(loadingTimer){ clearInterval(loadingTimer); loadingTimer = null; } }
 function showLoading(msg){
-  $('#sheetBody').innerHTML = `<div class="loading"><div class="spin"></div><div>${esc(msg)}</div></div>`;
+  stopLoading();
+  $('#sheetBody').innerHTML = `<div class="loading"><div class="spin"></div><div>${esc(msg)}</div><div class="hint" id="loadSec"></div></div>`;
+  const t0 = Date.now();
+  loadingTimer = setInterval(() => {
+    const el = $('#loadSec'); if(!el){ stopLoading(); return; }
+    const s = Math.floor((Date.now() - t0)/1000);
+    if(s >= 3) el.textContent = s < 20 ? `${s}秒` : `${s}秒 ・ 混み合っているようです。50秒で打ち切ってコピペ方式に切り替えます`;
+  }, 1000);
 }
 
 /* ---------- review / edit ---------- */
@@ -1103,7 +1137,7 @@ function openReview(draft, error){
       draft.text = prevText ? `${prevText} / ${fix}` : fix;
       openReview(draft);
     }catch(err){
-      if(['quota','network','busy'].includes(err.kind)) openCopyAnalyze(draft, fix, err.message);
+      if(['quota','network','busy','timeout'].includes(err.kind)) openCopyAnalyze(draft, fix, err.message);
       else openReview(draft, err.message);
     }
   };
@@ -1188,7 +1222,7 @@ async function getAdvice(){
     saveAdvice(await callAI({system:ADVICE_SYSTEM, text:advicePrompt(), maxTokens:800}));
   }catch(err){
     renderAdvice();
-    if(['quota','network','busy'].includes(err.kind)){ openCopyAdvice(err.message); return; }
+    if(['quota','network','busy','timeout'].includes(err.kind)){ openCopyAdvice(err.message); return; }
     box.insertAdjacentHTML('beforeend', `<div class="error" style="margin:var(--s3) 0 0">${esc(err.message)}</div>`);
   }
 }
