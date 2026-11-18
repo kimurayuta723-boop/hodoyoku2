@@ -259,6 +259,25 @@ img,svg{max-width:100%}
 .week svg{width:100%;height:auto;display:block}
 .period{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);margin:var(--s3) calc(var(--s2) * -1) var(--s2);text-align:center}
 .legend{display:flex;flex-wrap:wrap;gap:var(--s1) var(--s4);font-size:12px;color:var(--muted);margin:var(--s2) 0 var(--s1)}
+.goal-card{background:var(--plate);border-radius:var(--r-surface);padding:var(--s3) var(--s4);margin-top:var(--s3);box-shadow:var(--shadow)}
+.goal-line{font-size:14px;margin-top:2px}
+.mz-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px 4px}
+.mz-wd{text-align:center;font-size:11px;color:var(--muted)}
+.mz{position:relative;border:0;background:none;padding:0;aspect-ratio:1;display:grid;place-items:center;max-width:48px;justify-self:center;width:100%}
+.mz svg{width:100%;height:100%;display:block}
+.mz-plate{fill:var(--plate);filter:drop-shadow(0 1px 1.5px rgba(30,42,48,.12))}
+.mz-track{stroke:var(--line);stroke-width:3}
+.mz-well{fill:transparent}
+.mz-num{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;font-feature-settings:"tnum";color:var(--muted)}
+.mz-bare .mz-plate{fill:var(--paper);stroke:var(--line);stroke-width:1;stroke-dasharray:2 2;filter:none}
+.mz-bare .mz-track{stroke:transparent}
+.mz-hodo .mz-well{fill:var(--celadon-pale)}
+.mz-hodo .mz-num{color:var(--celadon-deep);font-weight:700}
+.mz-today .mz-plate{stroke:var(--ink);stroke-width:1.5}
+.mz:active{transform:scale(.94)}
+.mz-key-hodo{background:var(--celadon-pale)!important;box-shadow:inset 0 0 0 2px var(--celadon);border-radius:50%!important}
+.mz-key-glazed{background:var(--plate)!important;box-shadow:inset 0 0 0 2px var(--celadon);border-radius:50%!important}
+.mz-key-bare{background:transparent!important;border:1px dashed var(--muted);border-radius:50%!important}
 .verdict{font-size:14px;margin:var(--s3) 0 0}
 .legend .key{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .legend .key.dash{height:0;width:16px;border-radius:0;border-top:1.5px dashed var(--muted);vertical-align:3px}
@@ -414,7 +433,9 @@ function targets(){
   if(!(w>0 && h>0 && a>0)) return null;
   const male = settings.sex === 'male';
   const bmr = 10*w + 6.25*h - 5*a + (male ? 5 : -161);
-  const tdee = bmr * (+settings.activity || 1.375);
+  const tdeeCalc = bmr * (+settings.activity || 1.375);
+  const calibrated = !!settings.useCalib && +settings.calibTdee > 0;
+  const tdee = calibrated ? +settings.calibTdee : tdeeCalc;
   const lose = settings.goal === 'lose';
   let kcal = tdee, floored = false;
   if(lose){
@@ -442,7 +463,7 @@ function targets(){
   const saltStd = male ? 7.5 : 6.5;
   const salt = settings.saltMode === 'low' ? 6.0 : saltStd;
   const fiber = male ? 21 : 18;
-  return {kcal, protein, fat, carbs, fiber, salt, bmr:Math.round(bmr), tdee:Math.round(tdee), floored, balance:bal};
+  return {kcal, protein, fat, carbs, fiber, salt, bmr:Math.round(bmr), tdee:Math.round(tdee), tdeeCalc:Math.round(tdeeCalc), calibrated, floored, balance:bal};
 }
 function goalLabel(){
   if(settings.goal !== 'lose') return '体重を維持';
@@ -476,6 +497,7 @@ function render(){
 
 function renderPlate(s, t){
   const R = 118, C = 2*Math.PI*R;
+  const rim = rimArcs(s, t);
   const ratio = t ? s.kcal / t.kcal : 0;
   const lap1 = Math.min(ratio, 1);
   const lap2 = Math.min(Math.max(ratio - 1, 0), 1);   // 目標を超えた分は「二周目」として濃い青磁で重ねる
@@ -496,10 +518,23 @@ function renderPlate(s, t){
       ${ring(lap1, 'var(--celadon)', 8)}
       ${ring(lap2, 'var(--celadon-deep)', 8)}
       <circle cx="150" cy="150" r="100" fill="none" stroke="var(--line)" stroke-width="1"/>
+      ${rim}
     </svg>
     <div class="plate-center" role="img" aria-label="${t ? `目標${t.kcal}キロカロリーのうち${r0(s.kcal)}キロカロリー` : `合計${r0(s.kcal)}キロカロリー`}">${center}</div>`;
 }
 
+// お皿の縁: たんぱく質・脂質・炭水化物を、縁を3つに分けた細い弧で見せる(目標に対する割合)
+function rimArcs(s, t){
+  if(!t) return '';
+  const Rr = 136, cx = 150, cy = 150, gap = 7;
+  const pt = deg => { const a = (deg - 90) * Math.PI/180; return [cx + Rr*Math.cos(a), cy + Rr*Math.sin(a)]; };
+  const arc = (a0, a1) => { const [x0, y0] = pt(a0), [x1, y1] = pt(a1); return `M${x0.toFixed(2)},${y0.toFixed(2)} A${Rr},${Rr} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)},${y1.toFixed(2)}`; };
+  return [['protein','var(--p)'], ['fat','var(--f)'], ['carbs','var(--c)']].map(([k, col], i) => {
+    const a0 = i*120 + gap, a1 = (i+1)*120 - gap, frac = Math.max(0, Math.min(1, s[k] / t[k]));
+    return `<path d="${arc(a0, a1)}" fill="none" stroke="var(--line)" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+      ${frac > 0.01 ? `<path d="${arc(a0, a0 + (a1 - a0)*frac)}" fill="none" stroke="${col}" stroke-width="4" stroke-linecap="round"/>` : ''}`;
+  }).join('');
+}
 function renderNutri(s, t){
   const rows = [
     {k:'protein', n:'たんぱく質', c:'var(--p)'},
@@ -1472,6 +1507,155 @@ function bindReflection(range, keys){
   };
 }
 
+/* ---------- 体重の統計(共通) ---------- */
+// 傾向: 日々のブレをならした指数平滑の値(1日あたり10%ずつ新しい値を取り込む)
+function weightTrend(){
+  const keys = Object.keys(data.days).filter(k => weightOf(k) !== null).sort();
+  const out = {}; let tr = null, prev = null;
+  for(const k of keys){
+    const w = weightOf(k);
+    if(tr === null) tr = w;
+    else{ const gap = Math.max(1, Math.round((fromKey(k) - fromKey(prev)) / 864e5)); tr = tr + (1 - Math.pow(0.9, gap)) * (w - tr); }
+    out[k] = tr; prev = k;
+  }
+  return out;
+}
+// 最小二乗法の直線と、傾きの95%の幅
+function linReg(pts){
+  const n = pts.length; if(n < 4) return null;
+  const mx = pts.reduce((a, p) => a + p.d, 0)/n, my = pts.reduce((a, p) => a + p.w, 0)/n;
+  const sxx = pts.reduce((a, p) => a + (p.d - mx)**2, 0); if(!sxx) return null;
+  const sxy = pts.reduce((a, p) => a + (p.d - mx)*(p.w - my), 0);
+  const slope = sxy / sxx, icpt = my - slope*mx;
+  const sse = pts.reduce((a, p) => a + (p.w - (icpt + slope*p.d))**2, 0);
+  const se = Math.sqrt(sse / Math.max(1, n - 2) / sxx);
+  const T = [0, 12.7, 4.3, 3.18, 2.78, 2.57, 2.45, 2.36, 2.31, 2.26, 2.23, 2.2, 2.18, 2.16, 2.14, 2.13, 2.12, 2.11, 2.1, 2.09, 2.09, 2.08, 2.07, 2.07, 2.06, 2.06, 2.06, 2.05, 2.05, 2.05];
+  const tcrit = T[n - 2] || 2.0;
+  return {slope, icpt, ci: tcrit*se, wk: slope*7, wkCi: tcrit*se*7};
+}
+// 最近4週間の記録から、体重の傾きと実際の消費量を見積もる
+function recentEnergy(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const keys = dayRange(today, 28);
+  const pts = keys.filter(k => weightOf(k) !== null).map(k => ({k, w: weightOf(k), d: (fromKey(k) - fromKey(keys[0])) / 864e5}));
+  const span = pts.length > 1 ? pts[pts.length-1].d - pts[0].d : 0;
+  const reg = pts.length >= 6 && span >= 14 ? linReg(pts) : null;
+  const trend = weightTrend();
+  const lastKey = Object.keys(trend).sort().pop();
+  const res = {reg, weighDays: pts.length, span, trendNow: lastKey ? trend[lastKey] : null};
+  const intakeDays = keys.filter(k => data.days[k]?.meals?.length);
+  res.intakeDays = intakeDays.length;
+  if(!reg || intakeDays.length < 14) return res;
+  const avgIn = intakeDays.reduce((a, k) => a + sumDay(k).kcal, 0) / intakeDays.length;
+  const avgEx = settings.addExercise ? keys.reduce((a, k) => a + exKcal(k), 0) / keys.length : 0;
+  const est = avgIn - reg.slope*7200;                // 実際の消費 ≒ 平均摂取 − 体重の変化(kg/日)×7200
+  const base = Math.round((est - avgEx) / 10) * 10;   // 運動を目標に足す設定なら、その分は除いておく
+  const t0 = targetsWith({useCalib:false});
+  const plausible = !t0 || (base >= t0.bmr*1.05 && base <= t0.bmr*2.4);
+  Object.assign(res, {avgIn, avgEx, est, base, plausible});
+  return res;
+}
+// 目標体重までの見込み
+const jpPart = d => `${d.getFullYear() !== new Date().getFullYear() ? d.getFullYear() + '年' : ''}${d.getMonth()+1}月${d.getDate() <= 10 ? '上旬' : d.getDate() <= 20 ? '中旬' : '下旬'}`;
+function projectGoal(re){
+  const goal = +settings.goalWeight;
+  if(!(goal > 0) || re.trendNow === null) return null;
+  const diff = goal - re.trendNow;
+  if(Math.abs(diff) < 0.3) return {state:'reached', goal, diff};
+  const reg = re.reg;
+  if(!reg) return {state:'nodata', goal, diff};
+  const s = reg.slope, ci = reg.ci;
+  if(Math.sign(s) !== Math.sign(diff) || Math.abs(s) <= ci){
+    return {state: Math.sign(s) !== Math.sign(diff) && Math.abs(s) > ci ? 'away' : 'flat', goal, diff};
+  }
+  const today = new Date(); today.setHours(0,0,0,0);
+  const mid = diff / s;
+  const fast = diff / (s + Math.sign(s)*ci);
+  const slowSlope = s - Math.sign(s)*ci;
+  const slow = Math.sign(slowSlope) === Math.sign(s) && Math.abs(slowSlope) > 1e-6 ? diff / slowSlope : null;
+  const dt = n => addDays(today, Math.round(n));
+  return {state:'eta', goal, diff, mid: dt(mid), fast: dt(fast), slow: slow && slow < 3650 ? dt(slow) : null, days: Math.round(mid)};
+}
+function goalHtml(re){
+  const p = projectGoal(re);
+  if(!p) return '';
+  const left = `${p.goal.toFixed(1)}kgまで あと${Math.abs(p.diff).toFixed(1)}kg`;
+  let line;
+  if(p.state === 'reached') line = `目標の${p.goal.toFixed(1)}kgに届いています。${settings.goal === 'lose' ? '設定の「目的」を「維持」に切り替える頃合いです。' : ''}`;
+  else if(p.state === 'nodata') line = `${left}。見込みを出すには、最近4週間で2週間以上にわたって6回以上の記録が必要です。`;
+  else if(p.state === 'flat') line = `${left}。最近4週間は、日々のブレを超える増減がまだ見えないため、到達時期は出せません。`;
+  else if(p.state === 'away') line = `${left}。最近4週間は目標と逆向きに動いています。`;
+  else line = `${left}。このペースなら<b style="color:var(--ink)">${jpPart(p.mid)}ごろ</b>(${jpPart(p.fast)}〜${p.slow ? jpPart(p.slow) : 'それ以降'})。`;
+  return `<div class="goal-card"><div class="n-name">目標体重</div><div class="goal-line">${line}</div>${p.state === 'eta' ? '<div class="hint" style="margin:2px 0 0">最近4週間の体重の傾きから計算した、95%の目安の幅です。</div>' : ''}</div>`;
+}
+// 実績による目標の見直し
+function calibHtml(re){
+  const t = targets();
+  if(!t) return '';
+  if(settings.useCalib){
+    const fresh = re.base && re.plausible && Math.abs(re.base - settings.calibTdee) >= 50;
+    return `<div class="note" style="margin-top:var(--s3)">目標は<b style="color:var(--ink)">実績の消費 ${(+settings.calibTdee).toLocaleString()} kcal</b>(${esc(settings.calibAt || '')}時点)で計算しています。
+      ${fresh ? `<br>最新の実績は約${re.base.toLocaleString()} kcalです。` : ''}
+      <div class="row" style="margin-top:var(--s2);justify-content:flex-start">${fresh ? `<button class="btn btn-primary btn-sm" id="calibUpdate" style="flex:0 0 auto">最新の実績で更新</button>` : ''}<button class="btn btn-text btn-sm" id="calibOff" style="flex:0 0 auto">設定からの計算に戻す</button></div></div>`;
+  }
+  if(!re.base) return '';
+  if(!re.plausible) return `<div class="note" style="margin-top:var(--s3)">最近4週間の記録から逆算した消費は約${Math.round(re.est).toLocaleString()} kcalですが、からだの情報から考えにくい値です。記録していない食事があるかもしれないので、目標の見直しには使いません。</div>`;
+  if(Math.abs(re.base - t.tdee) < 100) return `<div class="note" style="margin-top:var(--s3)">最近4週間の実績の消費(約${re.base.toLocaleString()} kcal)は、設定からの計算とほぼ同じです。いまの目標のままで大丈夫です。</div>`;
+  const next = targetsWith({useCalib:true, calibTdee:re.base});
+  return `<div class="note calib" style="margin-top:var(--s3)">
+    <b style="color:var(--ink)">目標を実績に合わせませんか?</b><br>
+    最近4週間の記録から、実際の消費は約${re.base.toLocaleString()} kcal/日${settings.addExercise ? '(記録した運動を除く)' : ''}と見積もれます。設定からの計算(約${t.tdee.toLocaleString()} kcal)より${re.base > t.tdee ? '多め' : '少なめ'}です。
+    これを使うと、1日の目標は <b style="color:var(--ink)">${t.kcal.toLocaleString()} → ${next.kcal.toLocaleString()} kcal</b> になります。${next.floored ? '(安全な下限に合わせています)' : ''}
+    <div class="row" style="margin-top:var(--s2);justify-content:flex-start"><button class="btn btn-primary btn-sm" id="calibOn" style="flex:0 0 auto">実績で目標を計算する</button></div>
+    <div style="font-size:12px;margin-top:var(--s1)">記録していない食事があると、消費が多めに出ます。あとからいつでも戻せます。</div></div>`;
+}
+function bindCalib(re, after){
+  const on = () => { settings.useCalib = true; settings.calibTdee = re.base; settings.calibAt = labelOf(dkey(new Date())); saveSettings(); render(); after(); toast('実績の消費で目標を計算します'); };
+  if($('#calibOn')) $('#calibOn').onclick = on;
+  if($('#calibUpdate')) $('#calibUpdate').onclick = on;
+  if($('#calibOff')) $('#calibOff').onclick = () => { settings.useCalib = false; saveSettings(); render(); after(); toast('設定からの計算に戻しました'); };
+}
+function targetsWith(over){ const keep = settings; settings = {...settings, ...over}; try{ return targets(); } finally{ settings = keep; } }
+
+/* ---------- 豆皿のカレンダー ---------- */
+function mamezaraHtml(keys){
+  const t = targets();
+  const first = fromKey(keys[0]);
+  const lead = first.getDay();
+  let hodo = 0, rec = 0;
+  const cells = keys.map(k => {
+    const d = fromKey(k), has = data.days[k]?.meals?.length;
+    let ring = '', cls = 'mz-bare', title = `${labelOf(k)} 記録なし`;
+    if(has){
+      rec++;
+      const kc = sumDay(k).kcal;
+      if(t){
+        const goal = t.kcal + exAddToGoal(k), ratio = kc / goal;
+        const ok = Math.abs(ratio - 1) <= 0.1; if(ok) hodo++;
+        const C = 2*Math.PI*15;
+        const a = Math.min(ratio, 1), b = Math.min(Math.max(ratio - 1, 0), 1);
+        ring = `<circle cx="20" cy="20" r="15" fill="none" stroke="var(--celadon)" stroke-width="3" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-a)}" transform="rotate(-90 20 20)"/>
+          ${b ? `<circle cx="20" cy="20" r="15" fill="none" stroke="var(--celadon-deep)" stroke-width="3" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-b)}" transform="rotate(-90 20 20)"/>` : ''}`;
+        cls = ok ? 'mz-hodo' : 'mz-glazed';
+        title = `${labelOf(k)} ${r0(kc)}kcal(目標の${Math.round(ratio*100)}%)${ok ? ' ほどよい日' : ''}`;
+      }else{ cls = 'mz-glazed'; title = `${labelOf(k)} ${r0(kc)}kcal`; }
+    }
+    return `<button type="button" class="mz ${cls} ${k === viewKey ? 'mz-today' : ''}" data-day="${k}" aria-label="${title}">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" class="mz-plate"/><circle cx="20" cy="20" r="15" fill="none" class="mz-track"/>${ring}<circle cx="20" cy="20" r="10.5" class="mz-well"/></svg>
+      <span class="mz-num">${d.getDate()}</span></button>`;
+  });
+  return `<div class="mz-grid">
+      ${WD.map(w => `<div class="mz-wd">${w}</div>`).join('')}
+      ${'<div></div>'.repeat(lead)}${cells.join('')}
+    </div>
+    <div class="legend" style="margin-top:var(--s2)">
+      <span><i class="key mz-key-hodo"></i>ほどよい日(目標の±10%)</span>
+      <span><i class="key mz-key-glazed"></i>記録した日</span>
+      <span><i class="key mz-key-bare"></i>記録なし</span>
+    </div>
+    <p class="verdict">${t ? `ほどよい日 <span class="num" style="font-size:18px">${hodo}</span>日 / 記録した日 ${rec}日` : `記録した日 ${rec}日`}</p>`;
+}
+
 /* ---------- history (推移) ---------- */
 const RANGES = {
   week:    {label:'1週間'},
@@ -1577,16 +1761,7 @@ function openHistory(){
   // 1) 傾向線: 全期間の記録から、日々のブレをならした指数平滑の値(1日あたり10%ずつ新しい値を取り込む)
   // 2) 回帰直線: 期間内の体重に最小二乗法で直線を当て、週あたりの変化とその誤差を出す
   // 3) ばらつき: 傾向線からのずれの標準偏差(=日々のブレの大きさ)
-  const allW = Object.keys(data.days).filter(k => weightOf(k) !== null).sort();
-  const trendOf = {};
-  { let tr = null, prev = null;
-    for(const k of allW){
-      const w = weightOf(k);
-      if(tr === null) tr = w;
-      else{ const gap = Math.max(1, Math.round((fromKey(k) - fromKey(prev)) / 864e5)); tr = tr + (1 - Math.pow(0.9, gap)) * (w - tr); }
-      trendOf[k] = tr; prev = k;
-    }
-  }
+  const trendOf = weightTrend();
   // 日付 → 横位置(棒グラフの各単位の中で、日の位置に比例)
   const dayX = {};
   buckets.forEach((b, bi) => b.keys.forEach((k, j) => { dayX[k] = bi*slot + (j + 0.5) / b.keys.length * slot; }));
@@ -1595,17 +1770,8 @@ function openHistory(){
   let weightHtml;
   if(pts.length){
     // 回帰
-    let reg = null;
     const spanDays = pts.length > 1 ? pts[pts.length-1].d - pts[0].d : 0;
-    if(pts.length >= 4 && spanDays >= 6){
-      const nP = pts.length, mx = pts.reduce((a, p) => a + p.d, 0)/nP, my = pts.reduce((a, p) => a + p.w, 0)/nP;
-      const sxx = pts.reduce((a, p) => a + (p.d - mx)**2, 0), sxy = pts.reduce((a, p) => a + (p.d - mx)*(p.w - my), 0);
-      const slope = sxy / sxx, icpt = my - slope*mx;
-      const sse = pts.reduce((a, p) => a + (p.w - (icpt + slope*p.d))**2, 0);
-      const se = Math.sqrt(sse / Math.max(1, nP - 2) / sxx);
-      const tcrit = nP - 2 >= 30 ? 2.0 : [0, 12.7, 4.3, 3.18, 2.78, 2.57, 2.45, 2.36, 2.31, 2.26, 2.23, 2.2, 2.18, 2.16, 2.14, 2.13, 2.12, 2.11, 2.1, 2.09, 2.09, 2.08, 2.07, 2.07, 2.06, 2.06, 2.06, 2.05, 2.05, 2.05][nP - 2] || 2.0;
-      reg = {slope, icpt, ci: tcrit*se, wk: slope*7, wkCi: tcrit*se*7};
-    }
+    const reg = pts.length >= 4 && spanDays >= 6 ? linReg(pts) : null;
     // ばらつき(傾向線からのずれ)
     const resid = pts.map(p => p.w - p.t);
     const sd = resid.length >= 3 ? Math.sqrt(resid.reduce((a, r) => a + r*r, 0) / (resid.length - 1)) : null;
@@ -1622,6 +1788,8 @@ function openHistory(){
     const band = sd && pts.length > 1 ? `<path d="${line(pts.map(p => [p.x, p.t + sd]))} ${line(pts.slice().reverse().map(p => [p.x, p.t - sd])).replace(/^M/, 'L')} Z" fill="var(--ink)" opacity=".07"/>` : '';
     const trendPath = pts.length > 1 ? `<path d="${line(pts.map(p => [p.x, p.t]))}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>` : '';
     const regPath = reg ? `<path d="${line([[pts[0].x, reg.icpt + reg.slope*pts[0].d], [pts[pts.length-1].x, reg.icpt + reg.slope*pts[pts.length-1].d]])}" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4 4" fill="none"/>` : '';
+    const gw = +settings.goalWeight;
+    const goalLine = gw > lo && gw < hi ? `<line x1="0" x2="${W}" y1="${wy(gw)}" y2="${wy(gw)}" stroke="var(--celadon-deep)" stroke-width="1.2" stroke-dasharray="2 3"/><text x="${W-2}" y="${wy(gw)-4}" text-anchor="end" font-size="9.5" fill="var(--celadon-deep)" stroke="var(--paper)" stroke-width="3" paint-order="stroke">目標 ${gw.toFixed(1)}</text>` : '';
     const r = pts.length > 60 ? 1.6 : pts.length > 20 ? 2.2 : 3;
     const dots = pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${wy(p.w).toFixed(1)}" r="${r}" fill="var(--ink)" opacity=".35"/>`).join('');
     const ticks = (() => { const step = (hi - lo) > 6 ? 2 : (hi - lo) > 3 ? 1 : 0.5; const out = []; for(let g = Math.ceil(lo/step)*step; g <= hi; g += step) out.push(g); return out; })();
@@ -1640,25 +1808,18 @@ function openHistory(){
       if(reg.wk < -1.0 && upB < 0) verdict += ' 週1kgを超える減り方は、筋肉や水分が減っている可能性もあります。ペースを少しゆるめるのがおすすめです。';
     }else verdict = '傾向を計算するには、7日以上の間隔で4回以上の記録が必要です。';
 
-    // 実際の消費量の推定(エネルギー収支から逆算): 消費 ≒ 平均摂取 − 体重の変化(kg/日)×7200
-    let energy = '';
-    const intakeDays = allKeys.filter(k => data.days[k]?.meals?.length);
-    if(reg && spanDays >= 13 && intakeDays.length >= 10){
-      const avgIn = intakeDays.reduce((a, k) => a + sumDay(k).kcal, 0) / intakeDays.length;
-      const est = Math.round((avgIn - reg.slope*7200) / 10) * 10;
-      const t = targets();
-      energy = `<div class="note" style="margin-top:var(--s3)">記録から逆算した<b style="color:var(--ink)">実際の消費の目安 約${est.toLocaleString()} kcal/日</b>${t ? `(設定からの計算は約${t.tdee.toLocaleString()} kcal)` : ''}。<br><span style="font-size:12px">平均摂取 ${r0(avgIn).toLocaleString()} kcal と体重の傾きから出しています。記録していない食事があると高めに出ます。</span></div>`;
-    }
-
+    const re = recentEnergy();
+    const energy = goalHtml(re) + calibHtml(re);
     weightHtml = `
       <div class="legend">
         <span><i class="key" style="background:var(--ink);opacity:.35;border-radius:50%"></i>測った値</span>
         <span><i class="key" style="background:var(--ink);height:2px;width:16px;border-radius:0;vertical-align:3px"></i>傾向</span>
         ${sd ? `<span><i class="key" style="background:var(--ink);opacity:.12"></i>日々のブレの幅</span>` : ''}
         ${reg ? `<span><i class="key dash"></i>回帰直線</span>` : ''}
+        ${+settings.goalWeight ? `<span><i class="key dash" style="border-color:var(--celadon-deep)"></i>目標体重</span>` : ''}
       </div>
       <div class="week"><svg viewBox="0 0 ${W} ${WH}" role="img" aria-label="${RANGES[histRange].label}の体重の推移">
-        ${grid}${band}${regPath}${dots}${trendPath}${gridLabels}${wLabels}
+        ${grid}${band}${regPath}${goalLine}${dots}${trendPath}${gridLabels}${wLabels}
       </svg></div>
       <div class="stats">
         <div><div class="n-name">いまの傾向値</div><div><span class="num stat">${last.t.toFixed(1)}</span><span class="unit">kg</span></div></div>
@@ -1689,7 +1850,8 @@ function openHistory(){
       <button class="icon-btn" id="histNext" aria-label="次の期間" ${histOffset === 0 ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
     ${reflectionHtml(histRange, allKeys)}
-    <div class="group-title first" style="margin-top:var(--s4)">カロリー</div>
+    ${histRange === 'month' ? `<div class="group-title first" style="margin-top:var(--s4)">豆皿のカレンダー</div>${mamezaraHtml(allKeys)}` : ''}
+    <div class="group-title ${histRange === 'month' ? '' : 'first'}" style="${histRange === 'month' ? '' : 'margin-top:var(--s4)'}">カロリー</div>
     ${logged.length ? `
       <div class="legend">
         <span><i class="key" style="background:var(--celadon)"></i>摂取</span>
@@ -1719,6 +1881,7 @@ function openHistory(){
   `);
 
   bindReflection(histRange, allKeys);
+  { const re = recentEnergy(); bindCalib(re, () => { const y = $('#sheet').scrollTop; openHistory(); $('#sheet').scrollTop = y; }); }
   document.querySelectorAll('[data-range]').forEach(b => b.onclick = () => { histRange = b.dataset.range; histOffset = 0; openHistory(); });
   $('#histPrev').onclick = () => { histOffset++; openHistory(); };
   $('#histNext').onclick = () => { if(histOffset > 0){ histOffset--; openHistory(); } };
@@ -1747,8 +1910,10 @@ function openSettings(welcome){
       <div class="field"><label for="sHeight">身長 cm</label><input class="input" id="sHeight" type="number" inputmode="decimal" value="${esc(s.height)}"></div>
       <div class="field"><label for="sWeight">体重 kg</label><input class="input" id="sWeight" type="number" inputmode="decimal" value="${esc(s.weight)}"></div>
     </div>
+    <div class="field inline-field"><label for="sGoalW" style="min-width:auto">目標体重</label><input class="input" id="sGoalW" type="number" inputmode="decimal" step="0.1" value="${esc(s.goalWeight || '')}" placeholder="なし" style="width:110px"><span class="hint" style="margin:0">kg(任意)</span></div>
     <div class="field"><label for="sAct">ふだんの活動量</label>
       <select class="input" id="sAct">${ACTIVITY.map(a => `<option value="${a.v}" ${+s.activity === a.v ? 'selected' : ''}>${a.l}</option>`).join('')}</select>
+      ${s.useCalib ? `<div class="hint">いまは実績の消費(${(+s.calibTdee).toLocaleString()} kcal・${esc(s.calibAt || '')}時点)で目標を計算しているため、活動量は使っていません。<button type="button" class="btn btn-text btn-sm" id="sCalibOff" style="min-height:28px;padding:0 2px">設定からの計算に戻す</button></div>` : ''}
     </div>
     <div class="field"><span class="lbl">目的</span>
       <div class="seg" id="sGoal"><button type="button" data-v="lose" aria-pressed="${s.goal === 'lose'}">減量</button><button type="button" data-v="keep" aria-pressed="${s.goal === 'keep'}">維持</button></div>
@@ -1830,7 +1995,7 @@ function openSettings(welcome){
     document.querySelectorAll(`#${id} button`).forEach(x => x.setAttribute('aria-pressed', x === b));
     after && after(); preview();
   });
-  const read = () => { tmp.age = $('#sAge').value; tmp.height = $('#sHeight').value; tmp.weight = $('#sWeight').value; tmp.activity = +$('#sAct').value; };
+  const read = () => { tmp.age = $('#sAge').value; tmp.height = $('#sHeight').value; tmp.weight = $('#sWeight').value; tmp.activity = +$('#sAct').value; const g = parseFloat($('#sGoalW').value); tmp.goalWeight = g >= 20 && g <= 300 ? String(Math.round(g*10)/10) : ''; };
   const preview = () => {
     read();
     const keep = settings; settings = tmp; const t = targets(); settings = keep;
@@ -1838,11 +2003,12 @@ function openSettings(welcome){
     $('#paceHint').textContent = `1日 −${p.d}kcalが目安(1か月でおよそ${(p.d*30/7200).toFixed(1)}kg)。${tmp.pace === 'strict' ? '空腹がつらい日が続くときは、ペースを1段階ゆるめてください。' : ''}`;
     $('#balHint').textContent = (BALANCES[tmp.balance] || BALANCES.standard).note + '。';
     $('#targetPreview').innerHTML = t
-      ? `1日の目標 <b>${t.kcal} kcal</b>(たんぱく質 ${t.protein}g / 脂質 ${t.fat}g / 炭水化物 ${t.carbs}g / 塩分 ${t.salt}g未満)<br><span style="font-size:12px">基礎代謝 約${t.bmr} kcal・消費の目安 約${t.tdee} kcal。${t.floored ? '<b>選んだペースだと下限を下回るため、安全な下限(基礎代謝)に合わせています。</b>' : '目標は基礎代謝や安全な下限を下回らないように調整しています。'}</span>`
+      ? `1日の目標 <b>${t.kcal} kcal</b>(たんぱく質 ${t.protein}g / 脂質 ${t.fat}g / 炭水化物 ${t.carbs}g / 塩分 ${t.salt}g未満)<br><span style="font-size:12px">基礎代謝 約${t.bmr} kcal・消費の目安 約${t.tdee} kcal${t.calibrated ? '(実績)' : ''}。${t.floored ? '<b>選んだペースだと下限を下回るため、安全な下限(基礎代謝)に合わせています。</b>' : '目標は基礎代謝や安全な下限を下回らないように調整しています。'}</span>`
       : '年齢・身長・体重を入れると、1日の目標が計算されます。';
   };
   bindSeg('sSex', 'sex'); document.querySelectorAll('#sAddEx button').forEach(b => b.onclick = () => { tmp.addExercise = b.dataset.v === '1'; document.querySelectorAll('#sAddEx button').forEach(x => x.setAttribute('aria-pressed', x === b)); }); bindSeg('sGoal', 'goal', () => { $('#paceField').hidden = tmp.goal !== 'lose'; }); bindSeg('sPace', 'pace'); bindSeg('sBal', 'balance'); bindSeg('sSalt', 'saltMode');
   ['sAge','sHeight','sWeight','sAct'].forEach(id => $('#'+id).addEventListener('input', preview));
+  if($('#sCalibOff')) $('#sCalibOff').onclick = () => { tmp.useCalib = false; $('#sCalibOff').parentElement.textContent = '保存すると、設定からの計算に戻ります。'; preview(); };
   preview();
 
   $('#btnSaveSettings').onclick = () => {
